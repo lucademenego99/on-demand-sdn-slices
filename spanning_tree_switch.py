@@ -34,6 +34,15 @@ class SimpleSwitch13(simple_switch_13.SimpleSwitch13):
         self.mac_to_port = {}
         self.stp = kwargs['stplib']
 
+        self.SLICED = False
+        self.slice_to_port = {
+            1: {5: 1, 1: 5},
+            2: {1: 5, 5: 1},
+            3: {},
+            4: {},
+            5: {}
+        }
+
         # Sample of stplib config.
         #  please refer to stplib.Stp.set_config() for details.
         config = {dpid_lib.str_to_dpid('0000000000000001'):
@@ -75,18 +84,28 @@ class SimpleSwitch13(simple_switch_13.SimpleSwitch13):
 
         self.logger.info("packet in %s %s %s %s", dpid, src, dst, in_port)
 
-        # learn a mac address to avoid FLOOD next time.
-        self.mac_to_port[dpid][src] = in_port
-
-        if dst in self.mac_to_port[dpid]:
-            out_port = self.mac_to_port[dpid][dst]
+        if self.SLICED:
+            if in_port in self.slice_to_port[dpid]:
+                self.logger.info("Switch %s, input %s, forwarding packet to %s", dpid, in_port, self.slice_to_port[dpid][in_port])
+                out_port = self.slice_to_port[dpid][in_port]
+                actions = [datapath.ofproto_parser.OFPActionOutput(out_port)]
+            else:
+                self.logger.info("Switch %s, input %s, NOT FORWARDING")
+                out_port = -1
+                actions = []
         else:
-            out_port = ofproto.OFPP_FLOOD
+            # learn a mac address to avoid FLOOD next time.
+            self.mac_to_port[dpid][src] = in_port
 
-        actions = [parser.OFPActionOutput(out_port)]
+            if dst in self.mac_to_port[dpid]:
+                out_port = self.mac_to_port[dpid][dst]
+            else:
+                out_port = ofproto.OFPP_FLOOD
+
+            actions = [parser.OFPActionOutput(out_port)]
 
         # install a flow to avoid packet_in next time
-        if out_port != ofproto.OFPP_FLOOD:
+        if out_port != ofproto.OFPP_FLOOD and out_port != -1:
             match = parser.OFPMatch(in_port=in_port, eth_dst=dst)
             self.add_flow(datapath, 1, match, actions)
 
