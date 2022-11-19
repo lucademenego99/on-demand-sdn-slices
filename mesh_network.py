@@ -32,12 +32,12 @@ class MeshTopo(Topo):
 
         # Add switch links
         for i in range(0, len(switches)):
-               	for j in range(i+1, len(switches)):
-                       	self.addLink(switches[i], switches[j], **link_config)
+            for j in range(i+1, len(switches)):
+                self.addLink(switches[i], switches[j], **link_config)
 
         # Add host links
-       	for i in range(0, len(hosts)):
-                self.addLink(hosts[i], switches[i], **host_link_config)
+        for i in range(0, len(hosts)):
+            self.addLink(hosts[i], switches[i], **host_link_config)
 
 
 topos = {"meshtopo": (lambda: MeshTopo())}
