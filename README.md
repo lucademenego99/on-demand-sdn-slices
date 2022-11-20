@@ -6,9 +6,11 @@ Spanning_tree_switch taken from: /usr/lib/python3/dist-packages/ryu/app/simple_s
 
 
 sudo ovs-vsctl set-manager ptcp:6632
-ryu-manager ryu.app.rest_qos spanning_tree_switch_rest.py ryu.app.ofctl_rest ryu.app.rest_conf_switch
+ryu-manager ryu.app.rest_qos spanning_tree_switch_rest.py ryu.app.ofctl_rest ryu.app.rest_conf_switch ryu.app.rest_topology
 sudo ./mesh-network.py
 
+
+ curl -X POST -d '{"slice": {"1": {"5": 1, "1": 5}, "2": {"1": 5, "5": 1}, "3": {}, "4": {}, "5": {}}, "qos": [{"queue": "3", "switch_id": 1, "port_name": "s1-eth5", "max_rate": "500000", "nw_dst": "10.0.0.2", "nw_src": "10.0.0.1"}]}'  http://127.0.0.1:8080/api/v1/slice
 
 
 ### Slice test 1 - hosts 1 and 2

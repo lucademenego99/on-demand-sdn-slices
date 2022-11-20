@@ -29,10 +29,10 @@ from ryu.app.wsgi import ControllerBase, WSGIApplication, route
 from ryu.controller import dpset
 from ryu.app import simple_switch_13
 
-from stplib import ROOT_PORT
-
 # Switch application name, used to link the REST API controller to the switch
 switch_instance_name = 'switch_api_app'
+
+_PORTNO_LEN = 8
 
 # Base URL for REST API
 url = '/api/v1'
@@ -53,6 +53,8 @@ class SimpleSwitch13(simple_switch_13.SimpleSwitch13):
         self.dpset = kwargs['dpset']
 
         self.switches = []
+        self.hosts = []
+        self.links = []
         self.mac_to_port = {}
         self.slice_templates = [
             {
@@ -95,7 +97,9 @@ class SimpleSwitch13(simple_switch_13.SimpleSwitch13):
                     'nw_dst': "10.0.0.1",
                     'nw_src': "10.0.0.2",
                 },
-            ]
+            ],
+            [],
+            []
         ]
         self.stp = kwargs['stplib']
 
@@ -263,8 +267,26 @@ class SimpleSwitch13(simple_switch_13.SimpleSwitch13):
         """Get the list of switches in the network"""
 
         if self.switches == []:
-            self.switches = requests.get('http://localhost:8080/stats/switches').json()
+            self.switches = requests.get('http://localhost:8080/v1.0/topology/switches').json()
         return self.switches
+    
+    def get_hosts(self):
+        """Get the list of hosts in the network"""
+
+        if self.hosts == []:
+            self.hosts = requests.get('http://localhost:8080/v1.0/topology/hosts').json()
+        return self.hosts
+
+    def get_links(self):
+        """Get the list of links in the network"""
+
+        if self.links == []:
+            self.links = requests.get('http://localhost:8080/v1.0/topology/links').json()
+        return self.links
+    
+    def str_to_port_no(self, port_no_str):
+        assert len(port_no_str) == _PORTNO_LEN
+        return int(port_no_str, 8)
     
     def restore_topology(self):
         """Restore the topology of the network"""
@@ -272,18 +294,16 @@ class SimpleSwitch13(simple_switch_13.SimpleSwitch13):
         # Restore slice to port - every switch has all ports available
         self.slice_to_port = self.no_slice_configuration
 
-        for switch_id in self.slice_to_port.keys():
-            # get the handle of the bridge from switch.stp.bridge_list
+        for switch in self.get_switches():
+            switch_id = dpid_lib.str_to_dpid(switch["dpid"])
             bridge = self.stp.bridge_list[switch_id]
-            for port_id in self.get_switches():
-                # get port from bridge.ports where port.port_no == port_id
-                port = self.dpset.get_port(switch_id, port_id)
-                # enable the port
+            for port in switch["ports"]:
+                port = self.dpset.get_port(switch_id, self.str_to_port_no(port["port_no"]))
                 bridge.link_up(port)
-        
+
+        # Recalculate the spanning tree with the new topology
         for bridge in self.stp.bridge_list.values():
             bridge.recalculate_spanning_tree()
-
 
     def update_topology_slice(self):
         """Update the topology of the network, applying the slice restrictions"""
@@ -298,12 +318,11 @@ class SimpleSwitch13(simple_switch_13.SimpleSwitch13):
                     res.append(item)
             return res
         
-        # loop through all slice_to_port keys
-        for switch_id in self.slice_to_port.keys():
-            # get the handle of the bridge from switch.stp.bridge_list
+        for switch in self.get_switches():
+            switch_id = dpid_lib.str_to_dpid(switch["dpid"])
             bridge = self.stp.bridge_list[switch_id]
-            for port_id in self.get_switches():
-                # get port from bridge.ports where port.port_no == port_id
+            for port in switch["ports"]:
+                port_id = self.str_to_port_no(port["port_no"])
                 port = self.dpset.get_port(switch_id, port_id)
                 if port_id not in flatten(list(self.slice_to_port[switch_id].values())) and port_id not in list(self.slice_to_port[switch_id].keys()):
                     # disable the port
@@ -320,6 +339,26 @@ class SwitchController(ControllerBase):
         """Initialize the controller"""
         super(SwitchController, self).__init__(req, link, data, **config)
         self.switch_app = data[switch_instance_name]
+    
+    @route('get-switches', url + '/switches', methods=['GET'])
+    def get_switches(self, req, **kwargs):
+        """Get the list of switches in the network"""
+        return Response(text=json.dumps(self.switch_app.get_switches()), content_type='application/json')
+    
+    @route('get-hosts', url + '/hosts', methods=['GET'])
+    def get_hosts(self, req, **kwargs):
+        """Get the list of hosts in the network"""
+        return Response(text=json.dumps(self.switch_app.get_hosts()), content_type='application/json')
+    
+    @route('get-links', url + '/links', methods=['GET'])
+    def get_links(self, req, **kwargs):
+        """Get the list of links in the network"""
+        return Response(text=json.dumps(self.switch_app.get_links()), content_type='application/json')
+    
+    @route('get-slices', url + "/slices", methods=['GET'])
+    def get_slices(self, req, **kwargs):
+        """Get the list of slices"""
+        return Response(content_type='application/json', text=json.dumps({"slices": self.switch_app.slice_templates, "qos": self.switch_app.slice_qos}))
 
     @route('apply-slice', url + "/slice/{sliceid}", methods=['GET'], requirements={'sliceid': r'\d+'})
     def apply_slice(self, req, sliceid, **kwargs):
@@ -396,4 +435,57 @@ class SwitchController(ControllerBase):
         switch.slicing = False
 
         return Response(content_type='application/json', text=json.dumps({"status": "ok"}))
+    
+    @route('create-slice', url + "/slice", methods=['POST'])
+    def create_slice(self, req, **kwargs):
+        """Create a new slice template
+        
+        Args:
+            req: The request object with slice and qos configuration
+        """
+        switch = self.switch_app
 
+        try:
+            req = req.json if req.body else {}
+        except ValueError:
+            return Response(status=400, content_type='application/json', text=json.dumps({"status": "error", "message": "Invalid JSON"}))
+
+        slice_configuration = req["slice"]
+        qos_configuration = req["qos"]
+
+        # convert all keys of slice_configuration to int
+        slice_configuration = {int(k): v for k, v in slice_configuration.items()}
+
+        # For each value in slice_configuration, convert all keys to int
+        for k, v in slice_configuration.items():
+            slice_configuration[k] = {int(k2): v2 for k2, v2 in v.items()}
+
+        # Add the slice to the slice_templates
+        switch.slice_templates.append(slice_configuration)
+
+        # Add the slice to the slice_qos
+        switch.slice_qos.append(qos_configuration)
+
+        return Response(content_type='application/json', text=json.dumps({"status": "ok", "slice": slice_configuration, "qos": qos_configuration}))
+    
+    @route('delete-slice', url + "/slice/{sliceid}", methods=['DELETE'], requirements={'sliceid': r'\d+'})
+    def delete_slice(self, req, sliceid, **kwargs):
+        """Delete a slice template
+        
+        Args:
+            req: The request object
+            sliceid: The slice ID
+        """
+        switch = self.switch_app
+
+        # Check if the slice is valid
+        if len(switch.slice_templates) < int(sliceid):
+            return Response(status=404)
+
+        # Delete the slice from the slice_templates
+        del switch.slice_templates[int(sliceid)-1]
+
+        # Delete the slice from the slice_qos
+        del switch.slice_qos[int(sliceid)-1]
+
+        return Response(content_type='application/json', text=json.dumps({"status": "ok", "slices": switch.slice_templates, "qos": switch.slice_qos}))

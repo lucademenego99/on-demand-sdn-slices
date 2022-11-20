@@ -24,7 +24,7 @@ from ryu.controller import ofp_event
 from ryu.controller.handler import set_ev_cls
 from ryu.exception import RyuException
 from ryu.exception import OFPUnknownVersion
-from ryu.lib import hub
+import hub
 from ryu.lib import mac
 from ryu.lib.dpid import dpid_to_str
 from ryu.lib.packet import bpdu
