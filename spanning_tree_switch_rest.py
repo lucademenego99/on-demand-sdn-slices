@@ -15,18 +15,21 @@
 
 import json
 import requests
+import time
 
 from webob import Response
 from ryu.controller.handler import MAIN_DISPATCHER
 from ryu.controller.handler import set_ev_cls
 from ryu.ofproto import ofproto_v1_3
 from ryu.lib import dpid as dpid_lib
-from ryu.lib import stplib
+import stplib
 from ryu.lib.packet import packet
 from ryu.lib.packet import ethernet
 from ryu.app.wsgi import ControllerBase, WSGIApplication, route
 from ryu.controller import dpset
 from ryu.app import simple_switch_13
+
+from stplib import ROOT_PORT
 
 # Switch application name, used to link the REST API controller to the switch
 switch_instance_name = 'switch_api_app'
@@ -83,19 +86,31 @@ class SimpleSwitch13(simple_switch_13.SimpleSwitch13):
                     'max_rate': "500000",
                     'nw_dst': "10.0.0.2",
                     'nw_src': "10.0.0.1",
-                }
+                },
+                {
+                    'queue': "2",
+                    'switch_id': 2,
+                    'port_name': "s2-eth5",
+                    'max_rate': "500000",
+                    'nw_dst': "10.0.0.1",
+                    'nw_src': "10.0.0.2",
+                },
             ]
         ]
         self.stp = kwargs['stplib']
 
         self.slicing = False
-        self.slice_to_port = {
+
+        # Define the main configuration when no slice is active
+        self.no_slice_configuration = {
             1: {1: [2,3,4,5], 2: [1,3,4,5], 3: [1,2,4,5], 4: [1,2,3,5], 5: [1,2,3,4]},
             2: {1: [2,3,4,5], 2: [1,3,4,5], 3: [1,2,4,5], 4: [1,2,3,5], 5: [1,2,3,4]},
             3: {1: [2,3,4,5], 2: [1,3,4,5], 3: [1,2,4,5], 4: [1,2,3,5], 5: [1,2,3,4]},
             4: {1: [2,3,4,5], 2: [1,3,4,5], 3: [1,2,4,5], 4: [1,2,3,5], 5: [1,2,3,4]},
             5: {1: [2,3,4,5], 2: [1,3,4,5], 3: [1,2,4,5], 4: [1,2,3,5], 5: [1,2,3,4]}
         }
+        # At first no slice is active, so the configuration is the one defined above
+        self.slice_to_port = self.no_slice_configuration
 
         # Sample of stplib config.
         #  please refer to stplib.Stp.set_config() for details.
@@ -154,7 +169,7 @@ class SimpleSwitch13(simple_switch_13.SimpleSwitch13):
             mod = parser.OFPFlowMod(
                 datapath, command=ofproto.OFPFC_DELETE,
                 out_port=ofproto.OFPP_ANY, out_group=ofproto.OFPG_ANY,
-                priority=1, match=match)
+                priority=1, match=match, table_id=1)
             datapath.send_msg(mod)
 
     @set_ev_cls(stplib.EventPacketIn, MAIN_DISPATCHER)
@@ -255,13 +270,7 @@ class SimpleSwitch13(simple_switch_13.SimpleSwitch13):
         """Restore the topology of the network"""
 
         # Restore slice to port - every switch has all ports available
-        self.slice_to_port = {
-            1: {1: [2,3,4,5], 2: [1,3,4,5], 3: [1,2,4,5], 4: [1,2,3,5], 5: [1,2,3,4]},
-            2: {1: [2,3,4,5], 2: [1,3,4,5], 3: [1,2,4,5], 4: [1,2,3,5], 5: [1,2,3,4]},
-            3: {1: [2,3,4,5], 2: [1,3,4,5], 3: [1,2,4,5], 4: [1,2,3,5], 5: [1,2,3,4]},
-            4: {1: [2,3,4,5], 2: [1,3,4,5], 3: [1,2,4,5], 4: [1,2,3,5], 5: [1,2,3,4]},
-            5: {1: [2,3,4,5], 2: [1,3,4,5], 3: [1,2,4,5], 4: [1,2,3,5], 5: [1,2,3,4]}
-        }
+        self.slice_to_port = self.no_slice_configuration
 
         for switch_id in self.slice_to_port.keys():
             # get the handle of the bridge from switch.stp.bridge_list
@@ -271,6 +280,10 @@ class SimpleSwitch13(simple_switch_13.SimpleSwitch13):
                 port = self.dpset.get_port(switch_id, port_id)
                 # enable the port
                 bridge.link_up(port)
+        
+        for bridge in self.stp.bridge_list.values():
+            bridge.recalculate_spanning_tree()
+
 
     def update_topology_slice(self):
         """Update the topology of the network, applying the slice restrictions"""
@@ -325,18 +338,20 @@ class SwitchController(ControllerBase):
 
         # set qos
         for qos_configuration in switch.slice_qos[int(sliceid)-1]:
-            requests.put(
-                'http://localhost:8080/v1.0/conf/switches/0000000000000001/ovsdb_addr', 
-                headers={'Content-Type': 'application/x-www-form-urlencoded'}, 
-                data=json.dumps('tcp:127.0.0.1:6632')
-            )
+            # Set the ovsdb_addr to the switch
+            requests.put('http://localhost:8080/v1.0/conf/switches/' + dpid_lib.dpid_to_str(qos_configuration['switch_id']) + '/ovsdb_addr', data='"tcp:127.0.0.1:6632"')
 
-            requests.post('http://localhost:8080/qos/queue/' + dpid_lib.dpid_to_str(qos_configuration['switch_id']), json.dumps({
+            # Wait for the switch to be configured before applying the qos
+            time.sleep(0.1)
+
+            res = requests.post('http://localhost:8080/qos/queue/' + dpid_lib.dpid_to_str(qos_configuration['switch_id']), json.dumps({
                 "port_name": qos_configuration["port_name"],
                 "type": "linux-htb",
-                "max_rate": "100000",
-                "queues": [{"max_rate": "500000"}]
+                "max_rate": "10000000000",
+                "queues": [{"max_rate": qos_configuration['max_rate']}]
             }))
+
+            print("RES:", res.text)
 
             requests.post('http://localhost:8080/qos/rules/' + dpid_lib.dpid_to_str(qos_configuration['switch_id']), json.dumps({
                 "match": {
@@ -368,6 +383,12 @@ class SwitchController(ControllerBase):
 
         switch = self.switch_app
         switch.slicing = True
+
+        # Delete all qos rules
+        requests.delete('http://localhost:8080/qos/rules/all', data=json.dumps({"rule_id": "all", "qos_id": "all"}))
+
+        # Delete all queues
+        requests.delete('http://localhost:8080/qos/queue/all')
 
         # Restore the topology - all ports are available
         switch.restore_topology()
