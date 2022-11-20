@@ -17,9 +17,7 @@ import json
 import requests
 
 from webob import Response
-from ryu.base import app_manager
-from ryu.controller import ofp_event
-from ryu.controller.handler import CONFIG_DISPATCHER, MAIN_DISPATCHER
+from ryu.controller.handler import MAIN_DISPATCHER
 from ryu.controller.handler import set_ev_cls
 from ryu.ofproto import ofproto_v1_3
 from ryu.lib import dpid as dpid_lib
@@ -30,14 +28,24 @@ from ryu.app.wsgi import ControllerBase, WSGIApplication, route
 from ryu.controller import dpset
 from ryu.app import simple_switch_13
 
+# Switch application name, used to link the REST API controller to the switch
 switch_instance_name = 'switch_api_app'
+
+# Base URL for REST API
 url = '/api/v1'
 
 class SimpleSwitch13(simple_switch_13.SimpleSwitch13):
+    """Base Switch class, called via ryu-manager"""
+
+
     OFP_VERSIONS = [ofproto_v1_3.OFP_VERSION]
     _CONTEXTS = {'stplib': stplib.Stp, 'wsgi': WSGIApplication, 'dpset': dpset.DPSet}
 
     def __init__(self, *args, **kwargs):
+        """Initialize the switch
+        
+        Get references to the STP instance, register the REST API and initialize some variables
+        """
         super(SimpleSwitch13, self).__init__(*args, **kwargs)
         self.dpset = kwargs['dpset']
 
@@ -107,6 +115,20 @@ class SimpleSwitch13(simple_switch_13.SimpleSwitch13):
         wsgi.register(SwitchController, {switch_instance_name: self})
 
     def add_flow(self, datapath, priority, match, actions, buffer_id=None):
+        """Add a flow to the switch
+
+        This function is a modified version of the one in simple_switch_13.py.
+        It sends flow_mod messages with table_id set to 1, instead of 0.
+        This is needed for the QoS REST API to work properly.
+
+        Args:
+            datapath: The switch to add the flow to
+            priority: The priority of the flow, from 0 to 65535
+            match: The match of the flow, a dictionary of fields and values
+            actions: The actions of the flow, a list of dictionaries of fields and values
+            buffer_id: The buffer ID of the flow, if any
+        """
+
         ofproto = datapath.ofproto
         parser = datapath.ofproto_parser
 
@@ -122,6 +144,8 @@ class SimpleSwitch13(simple_switch_13.SimpleSwitch13):
         datapath.send_msg(mod)
 
     def delete_flow(self, datapath):
+        """Delete a from from the switch"""
+
         ofproto = datapath.ofproto
         parser = datapath.ofproto_parser
 
@@ -135,6 +159,13 @@ class SimpleSwitch13(simple_switch_13.SimpleSwitch13):
 
     @set_ev_cls(stplib.EventPacketIn, MAIN_DISPATCHER)
     def _packet_in_handler(self, ev):
+        """Handle packet in messages from the switch, learning the MAC address of the source and adding a flow if possible.
+        Eventually the packet is forwarded to the destination, or flooded.
+
+        Args:
+            ev: The EventPacketIn object
+        """
+
         if not self.slicing:
             msg = ev.msg
             datapath = msg.datapath
@@ -182,6 +213,12 @@ class SimpleSwitch13(simple_switch_13.SimpleSwitch13):
 
     @set_ev_cls(stplib.EventTopologyChange, MAIN_DISPATCHER)
     def _topology_change_handler(self, ev):
+        """Handle topology change events from the STP library.
+
+        Args:
+            ev: The EventTopologyChange object
+        """
+
         dp = ev.dp
         dpid_str = dpid_lib.dpid_to_str(dp.id)
         msg = 'Receive topology change event. Flush MAC table.'
@@ -193,6 +230,11 @@ class SimpleSwitch13(simple_switch_13.SimpleSwitch13):
 
     @set_ev_cls(stplib.EventPortStateChange, MAIN_DISPATCHER)
     def _port_state_change_handler(self, ev):
+        """Handle port state change events from the STP library.
+
+        Args:
+            ev: The EventPortStateChange object
+        """
         dpid_str = dpid_lib.dpid_to_str(ev.dp.id)
         of_state = {stplib.PORT_STATE_DISABLE: 'DISABLE',
                     stplib.PORT_STATE_BLOCK: 'BLOCK',
@@ -203,11 +245,15 @@ class SimpleSwitch13(simple_switch_13.SimpleSwitch13):
                           dpid_str, ev.port_no, of_state[ev.port_state])
     
     def get_switches(self):
+        """Get the list of switches in the network"""
+
         if self.switches == []:
             self.switches = requests.get('http://localhost:8080/stats/switches').json()
         return self.switches
     
     def restore_topology(self):
+        """Restore the topology of the network"""
+
         # Restore slice to port - every switch has all ports available
         self.slice_to_port = {
             1: {1: [2,3,4,5], 2: [1,3,4,5], 3: [1,2,4,5], 4: [1,2,3,5], 5: [1,2,3,4]},
@@ -227,7 +273,10 @@ class SimpleSwitch13(simple_switch_13.SimpleSwitch13):
                 bridge.link_up(port)
 
     def update_topology_slice(self):
+        """Update the topology of the network, applying the slice restrictions"""
+
         def flatten(l):
+            """Flatten a list of lists to a single list"""
             res = []
             for item in l:
                 if type(item) is list:
@@ -251,14 +300,22 @@ class SimpleSwitch13(simple_switch_13.SimpleSwitch13):
                     bridge.link_up(port)
 
 
-
 class SwitchController(ControllerBase):
+    """Basic controller exposing the REST API"""
+    
     def __init__(self, req, link, data, **config):
+        """Initialize the controller"""
         super(SwitchController, self).__init__(req, link, data, **config)
         self.switch_app = data[switch_instance_name]
 
     @route('apply-slice', url + "/slice/{sliceid}", methods=['GET'], requirements={'sliceid': r'\d+'})
     def apply_slice(self, req, sliceid, **kwargs):
+        """Apply the slice restrictions to the network
+        
+        Args:
+            req: The request object
+            sliceid: The slice ID
+        """
         switch = self.switch_app
         switch.slicing = True
 
@@ -268,24 +325,20 @@ class SwitchController(ControllerBase):
 
         # set qos
         for qos_configuration in switch.slice_qos[int(sliceid)-1]:
-            #res = requests.put('http://localhost:8080/v1.0/conf/switches/' + dpid_lib.dpid_to_str(qos_configuration['switch_id']) + '/ovsdb_addr', headers={'Content-Type': 'application/x-www-form-urlencoded',}, data='"tcp:127.0.0.1:6632"')
+            requests.put(
+                'http://localhost:8080/v1.0/conf/switches/0000000000000001/ovsdb_addr', 
+                headers={'Content-Type': 'application/x-www-form-urlencoded'}, 
+                data=json.dumps('tcp:127.0.0.1:6632')
+            )
 
-            headers = {
-                'Content-Type': 'application/x-www-form-urlencoded',
-            }
-            data = 'tcp:127.0.0.1:6632'
-            requests.put('http://localhost:8080/v1.0/conf/switches/0000000000000001/ovsdb_addr', headers=headers, data=json.dumps(data))
-
-            res = requests.post('http://localhost:8080/qos/queue/' + dpid_lib.dpid_to_str(qos_configuration['switch_id']), json.dumps({
+            requests.post('http://localhost:8080/qos/queue/' + dpid_lib.dpid_to_str(qos_configuration['switch_id']), json.dumps({
                 "port_name": qos_configuration["port_name"],
                 "type": "linux-htb",
                 "max_rate": "100000",
                 "queues": [{"max_rate": "500000"}]
             }))
 
-            print("RES:::", res.text)
-
-            res = requests.post('http://localhost:8080/qos/rules/' + dpid_lib.dpid_to_str(qos_configuration['switch_id']), json.dumps({
+            requests.post('http://localhost:8080/qos/rules/' + dpid_lib.dpid_to_str(qos_configuration['switch_id']), json.dumps({
                 "match": {
                     "nw_dst": qos_configuration["nw_dst"],
                     "nw_src": qos_configuration["nw_src"],
@@ -307,6 +360,12 @@ class SwitchController(ControllerBase):
     
     @route('deactivate-slice', url + "/slice/deactivate", methods=['GET'])
     def deactivate_slice(self, req, **kwargs):
+        """Deactivate the slice restrictions to the network
+        
+        Args:
+            req: The request object
+        """
+
         switch = self.switch_app
         switch.slicing = True
 
