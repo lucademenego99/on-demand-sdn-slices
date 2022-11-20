@@ -21,6 +21,7 @@ from webob import Response
 from ryu.controller.handler import MAIN_DISPATCHER
 from ryu.controller.handler import set_ev_cls
 from ryu.ofproto import ofproto_v1_3
+from ryu.lib.packet import ether_types
 from ryu.lib import dpid as dpid_lib
 import stplib
 from ryu.lib.packet import packet
@@ -197,6 +198,10 @@ class SimpleSwitch13(simple_switch_13.SimpleSwitch13):
 
             dst = eth.dst
             src = eth.src
+
+            # Ignore LLDP packets - they are used for topology discovery
+            if eth.ethertype == ether_types.ETH_TYPE_LLDP:
+                return
 
             dpid = datapath.id
             self.mac_to_port.setdefault(dpid, {})

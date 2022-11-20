@@ -1,0 +1,51 @@
+* {
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+}
+
+#topology {  
+    /* border: 1px solid #000000;   */
+    width: 100%;
+    height: 100%;
+}
+
+#console {
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    width: 50%;
+    border: 1px solid black;
+}
+
+.node {
+}
+
+.node.fixed {
+    fill: #C0C0C0;
+}
+
+.node text {
+    font-size: 14px;
+}
+
+.link {
+    stroke: #090909;
+    stroke-opacity: .6;
+    stroke-width: 2px;
+}
+
+.port circle {
+    stroke: black;
+    fill: #C5F9F9;
+}
+
+.port text {
+    font-size: 10px;
+}
+
