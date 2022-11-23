@@ -14,16 +14,30 @@
 # limitations under the License.
 
 """
-Usage example
+Main application for the Ryu SDN controller.
 
-1. Join switches (use your favorite method):
-$ sudo mn --controller remote --topo tree,depth=3
+This module is the main application for the Ryu SDN controller. It
+contains the RyuApp class which is the base class for Ryu applications.
 
-2. Run this application:
-$ PYTHONPATH=. ./bin/ryu run \
-    --observe-links ryu/app/gui_topology/gui_topology.py
+Run this application by executing:
+- `sudo ovs-vsctl set-manager ptcp:6632`          # Necessary for QoS REST API to work properly
+- `ryu run --observe-links ryu_application.py`    # Run application
 
-3. Access http://<ip address of ryu host>:8080 with your web browser.
+The application will start a Ryu controller and a web server. The web
+server will be accessible at http://localhost:8080. The Ryu controller
+will expose a REST API at http://localhost:8080/api/v1. More information
+about the REST API can be found in the README.md file.
+
+The application will also expose a WebSocket API at
+ws://localhost:8080/v1.0/topology/ws allowing to subscribe
+to topology changes.
+
+More API routes are actually available, exposed by some pre-configured
+Ryu applications:
+- ryu.app.rest_qos
+- ryu.app.rest_conf_switch
+- ryu.app.rest_topology
+- ryu.app.ofctl_rest
 """
 
 import os
@@ -32,9 +46,6 @@ from webob.static import DirectoryApp
 
 from ryu.app.wsgi import ControllerBase, WSGIApplication, route
 from ryu.base import app_manager
-
-
-PATH = os.path.dirname(__file__)
 
 
 # Serving static files
@@ -53,6 +64,8 @@ class GUIServerApp(app_manager.RyuApp):
 class GUIServerController(ControllerBase):
     def __init__(self, req, link, data, **config):
         super(GUIServerController, self).__init__(req, link, data, **config)
+
+        # Serve static files from the 'html' directory
         path = "./html/"
         self.static_app = DirectoryApp(path)
 
@@ -62,7 +75,8 @@ class GUIServerController(ControllerBase):
             req.path_info = kwargs['filename']
         return self.static_app(req)
 
-
+# Require the following Ryu applications to be loaded
+# (see README.md for more information)
 app_manager.require_app('ryu.app.rest_qos')
 app_manager.require_app('/home/vagrant/comnetsemu/app/realizing_network_slicing/on-demand-sdn-slices/switch_stp_rest.py')
 app_manager.require_app('ryu.app.ofctl_rest')

@@ -8,18 +8,31 @@ from mininet.link import TCLink
 
 
 class MeshTopo(Topo):
+    """
+    Define a sample topology with 5 hosts and 5 switches.
+    The topology is a mesh topology.
+    """
+
     def __init__(self):
         # Initialize topology
         Topo.__init__(self)
 
         # Create template host, switch, and link
+        
         host_config = dict(inNamespace=True)
-        link_config = dict(bw=10)
-        host_link_config = dict()
+        """Hosts configuration"""
 
-        # Keep list of switches and hosts
+        link_config = dict(bw=10)
+        """Switch-Switch links configuration"""
+
+        host_link_config = dict()
+        """Host-Switch links configuration"""
+
         switches = []
+        """List of switches"""
+
         hosts = []
+        """List of hosts"""
 
         # Create switch nodes
         for i in range(5):

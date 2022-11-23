@@ -40,7 +40,7 @@ The main business logic of the application is inside the file `switch_stp_rest.p
 
 Some ryu components have been modified a bit to meet this project's requirements, namely the `stplib` and the main `hub`.
 
-## REST API routes
+## REST API routes (swagger docs?)
 Following are the routes exposed by the `switch_stp_rest` Controller.
 
 ...
@@ -54,4 +54,14 @@ Create a new slice:
 ```
 curl -X POST -d '{"slice": {"1": {"5": 1, "1": 5}, "2": {"1": 5, "5": 1}, "3": {}, "4": {}, "5": {}}, "qos": [{"queue": "3", "switch_id": 1, "port_name": "s1-eth5", "max_rate": "500000", "nw_dst": "10.0.0.2", "nw_src": "10.0.0.1"}]}'  http://127.0.0.1:8080/api/v1/slice
 ```
+
+# Todos
+
+- instead of redefining ws_topology, stplib and hub, can we just extend them with the few new features we need?
+- make switch_stp_rest's `__init__` independent from the architecture
+  - we need to decide how the priority of each switch should be defined: is it possible to choose it based on the links' bandwidth? Do we have this information at startup?
+- TODO web application
+  - maybe add some new listeners to the ws_topology, to update the webapp when the ports' status is changing
+  - should we use a web framework (e.g. Svelte)? I wanted to use it, but when calling the API from another port you get CORS errors, and I couldn't find a way to modify the response headers of the python web server to solve the problem.
+- TODO cli application
 

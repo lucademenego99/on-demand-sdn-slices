@@ -30,20 +30,22 @@ from ryu.app.wsgi import ControllerBase, WSGIApplication, route
 from ryu.controller import dpset
 from ryu.app import simple_switch_13
 
-# Switch application name, used to link the REST API controller to the switch
 switch_instance_name = 'switch_api_app'
+"""Switch application name, used to link the REST API controller to the switch"""
 
 _PORTNO_LEN = 8
 
-# Base URL for REST API
 url = '/api/v1'
+"""Base URL for the REST API"""
 
 class SimpleSwitch13(simple_switch_13.SimpleSwitch13):
     """Base Switch class, called via ryu-manager"""
 
-
     OFP_VERSIONS = [ofproto_v1_3.OFP_VERSION]
+    """OpenFlow protocol version"""
+
     _CONTEXTS = {'stplib': stplib.Stp, 'wsgi': WSGIApplication, 'dpset': dpset.DPSet}
+    """Contexts that this Ryu application wants to use."""
 
     def __init__(self, *args, **kwargs):
         """Initialize the switch
@@ -51,12 +53,23 @@ class SimpleSwitch13(simple_switch_13.SimpleSwitch13):
         Get references to the STP instance, register the REST API and initialize some variables
         """
         super(SimpleSwitch13, self).__init__(*args, **kwargs)
+
+        # TODO can it be replaced with the topology ryu app?
         self.dpset = kwargs['dpset']
+        """Manage switches"""
 
         self.switches = []
+        """List of switches in the network"""
+
         self.hosts = []
+        """List of hosts in the network"""
+        
         self.links = []
+        """List of links in the network"""
+
         self.mac_to_port = {}
+        """Dictionary of MAC addresses to port numbers"""
+
         self.slice_templates = [
             {
                 1: {5: 1, 1: 5},
@@ -80,6 +93,8 @@ class SimpleSwitch13(simple_switch_13.SimpleSwitch13):
                 5: {}
             }
         ]
+        """List of slice templates"""
+
         self.slice_qos = [
             [
                 {
@@ -102,11 +117,14 @@ class SimpleSwitch13(simple_switch_13.SimpleSwitch13):
             [],
             []
         ]
+        """List of slice QoS rules"""
+
         self.stp = kwargs['stplib']
+        """Spanning Tree Protocol instance"""
 
         self.slicing = False
+        """Whether there is a slice currently activating"""
 
-        # Define the main configuration when no slice is active
         self.no_slice_configuration = {
             1: {1: [2,3,4,5], 2: [1,3,4,5], 3: [1,2,4,5], 4: [1,2,3,5], 5: [1,2,3,4]},
             2: {1: [2,3,4,5], 2: [1,3,4,5], 3: [1,2,4,5], 4: [1,2,3,5], 5: [1,2,3,4]},
@@ -114,11 +132,11 @@ class SimpleSwitch13(simple_switch_13.SimpleSwitch13):
             4: {1: [2,3,4,5], 2: [1,3,4,5], 3: [1,2,4,5], 4: [1,2,3,5], 5: [1,2,3,4]},
             5: {1: [2,3,4,5], 2: [1,3,4,5], 3: [1,2,4,5], 4: [1,2,3,5], 5: [1,2,3,4]}
         }
-        # At first no slice is active, so the configuration is the one defined above
-        self.slice_to_port = self.no_slice_configuration
+        """Default configuration when no slice is active"""
 
-        # Sample of stplib config.
-        #  please refer to stplib.Stp.set_config() for details.
+        self.slice_to_port = self.no_slice_configuration
+        """Current slice configuration"""
+
         config = {dpid_lib.str_to_dpid('0000000000000001'):
                   {'bridge': {'priority': 0x8000, 'fwd_delay': 2}},
                   dpid_lib.str_to_dpid('0000000000000002'):
@@ -129,9 +147,15 @@ class SimpleSwitch13(simple_switch_13.SimpleSwitch13):
                   {'bridge': {'priority': 0xb000, 'fwd_delay': 2}},
                   dpid_lib.str_to_dpid('0000000000000005'):
                   {'bridge': {'priority': 0xc000, 'fwd_delay': 2}}}
+        """STP configuration"""
+
+        # Register the STP configuration
         self.stp.set_config(config)
 
         wsgi = kwargs['wsgi']
+        """WSGI application instance"""
+
+        # Register the REST API
         wsgi.register(SwitchController, {switch_instance_name: self})
 
     def add_flow(self, datapath, priority, match, actions, buffer_id=None):
@@ -289,6 +313,7 @@ class SimpleSwitch13(simple_switch_13.SimpleSwitch13):
             self.links = requests.get('http://localhost:8080/v1.0/topology/links').json()
         return self.links
     
+    # TODO move it to a separate specially-crafted class
     def str_to_port_no(self, port_no_str):
         assert len(port_no_str) == _PORTNO_LEN
         return int(port_no_str, 8)
