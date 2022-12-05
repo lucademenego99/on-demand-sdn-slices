@@ -13,12 +13,17 @@ var CONF = {
 
 var ws = new WebSocket("ws://" + location.host + "/v1.0/topology/ws");
 ws.onmessage = function(event) {
+    console.log("Received message: " + event.data);
     var data = JSON.parse(event.data);
 
-    var result = rpc[data.method](data.params);
+    if (rpc[data.method]) {
+        var result = rpc[data.method](data.params);
 
-    var ret = {"id": data.id, "jsonrpc": "2.0", "result": result};
-    this.send(JSON.stringify(ret));
+        var ret = {"id": data.id, "jsonrpc": "2.0", "result": result};
+        this.send(JSON.stringify(ret));
+    } else {
+        this.send(JSON.stringify({"id": data.id, "jsonrpc": "2.0", "error": {"message": "unknown method", "code": 34}}));
+    }
 }
 
 function trim_zero(obj) {

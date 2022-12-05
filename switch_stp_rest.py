@@ -21,6 +21,7 @@ from webob import Response
 from ryu.controller.handler import MAIN_DISPATCHER
 from ryu.controller.handler import set_ev_cls
 from ryu.ofproto import ofproto_v1_3
+from ryu.controller import event
 from ryu.lib.packet import ether_types
 from ryu.lib import dpid as dpid_lib
 import stplib
@@ -38,6 +39,11 @@ _PORTNO_LEN = 8
 url = '/api/v1'
 """Base URL for the REST API"""
 
+class EventTest(event.EventBase):
+    def __init__(self, dp):
+        super(EventTest, self).__init__()
+        self.dp = dp
+
 class SimpleSwitch13(simple_switch_13.SimpleSwitch13):
     """Base Switch class, called via ryu-manager"""
 
@@ -53,6 +59,8 @@ class SimpleSwitch13(simple_switch_13.SimpleSwitch13):
         Get references to the STP instance, register the REST API and initialize some variables
         """
         super(SimpleSwitch13, self).__init__(*args, **kwargs)
+
+        self.name = switch_instance_name
 
         # TODO can it be replaced with the topology ryu app?
         self.dpset = kwargs['dpset']
@@ -209,7 +217,6 @@ class SimpleSwitch13(simple_switch_13.SimpleSwitch13):
         Args:
             ev: The EventPacketIn object
         """
-
         if not self.slicing:
             msg = ev.msg
             datapath = msg.datapath
@@ -230,7 +237,7 @@ class SimpleSwitch13(simple_switch_13.SimpleSwitch13):
             dpid = datapath.id
             self.mac_to_port.setdefault(dpid, {})
 
-            self.logger.info("packet in S%s - %s", dpid, in_port)
+            # self.logger.info("packet in S%s - %s", dpid, in_port)
 
             if in_port in self.slice_to_port[dpid]:
                 # learn a mac address to avoid FLOOD next time.
@@ -267,6 +274,9 @@ class SimpleSwitch13(simple_switch_13.SimpleSwitch13):
             ev: The EventTopologyChange object
         """
 
+        # Send test event to websocket
+        self.send_event("wstopology", EventTest(4))
+
         dp = ev.dp
         dpid_str = dpid_lib.dpid_to_str(dp.id)
         msg = 'Receive topology change event. Flush MAC table.'
@@ -294,7 +304,7 @@ class SimpleSwitch13(simple_switch_13.SimpleSwitch13):
     
     def get_switches(self):
         """Get the list of switches in the network"""
-
+        
         if self.switches == []:
             self.switches = requests.get('http://localhost:8080/v1.0/topology/switches').json()
         return self.switches

@@ -44,27 +44,50 @@ from ryu.app.wsgi import (
 )
 from ryu.base import app_manager
 from ryu.topology import event, switches
+from ryu.ofproto import ofproto_v1_3
 from ryu.controller.handler import set_ev_cls
-
+from ryu.controller.handler import MAIN_DISPATCHER
+import switch_stp_rest
+import stplib
 
 class WebSocketTopology(app_manager.RyuApp):
     _CONTEXTS = {
+        'stplib': stplib.Stp,
         'wsgi': WSGIApplication,
         'switches': switches.Switches,
     }
+    OFP_VERSIONS = [ofproto_v1_3.OFP_VERSION]
 
     def __init__(self, *args, **kwargs):
         super(WebSocketTopology, self).__init__(*args, **kwargs)
 
+        self.name = 'wstopology'
         self.rpc_clients = []
+
+        self.stp = kwargs['stplib']
 
         wsgi = kwargs['wsgi']
         wsgi.register(WebSocketTopologyController, {'app': self})
 
-    @set_ev_cls(event.EventSwitchEnter)
-    def _event_switch_enter_handler(self, ev):
-        msg = ev.switch.to_dict()
-        self._rpc_broadcall('event_switch_enter', msg)
+    # TODO It seems that sometimes this handler blocks everything - don't know why
+    # I don't even think we need it because the number of switches is not dynamic, maybe we should just remove it
+    # @set_ev_cls(event.EventSwitchEnter)
+    # def _event_switch_enter_handler(self, ev):
+    #     msg = ev.switch.to_dict()
+    #     self._rpc_broadcall('event_switch_enter', msg)
+    
+    @set_ev_cls(switch_stp_rest.EventTest, MAIN_DISPATCHER)
+    def _event_test(self, ev):
+        # Handle the custom event (sent with `self.send_event("wstopology", EventTest(4))`)
+        # NOTE: this event will fire an exception because there is no event_test method on the websocket handler
+        self._rpc_broadcall('event_test', None)
+    
+    # Example of how to listen for events from stplib
+    # @set_ev_cls(stplib.EventPacketIn, MAIN_DISPATCHER)
+    # def _packet_in_handler(self, ev):
+    #    pass
+    #    # handle packet in
+    #    self._rpc_broadcall('event_packet_in', {'method': "packet-in", 'params': "test"})
 
     @set_ev_cls(event.EventSwitchLeave)
     def _event_switch_leave_handler(self, ev):

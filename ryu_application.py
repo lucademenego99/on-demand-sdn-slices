@@ -78,8 +78,8 @@ class GUIServerController(ControllerBase):
 # Require the following Ryu applications to be loaded
 # (see README.md for more information)
 app_manager.require_app('ryu.app.rest_qos')
-app_manager.require_app('/home/vagrant/comnetsemu/app/realizing_network_slicing/on-demand-sdn-slices/switch_stp_rest.py')
+app_manager.require_app('ryu.app.rest_topology')
+app_manager.require_app('/home/vagrant/comnetsemu/app/realizing_network_slicing/on-demand-sdn-slices/ws_topology.py')
 app_manager.require_app('ryu.app.ofctl_rest')
 app_manager.require_app('ryu.app.rest_conf_switch')
-app_manager.require_app('ryu.app.rest_topology')
-app_manager.require_app('ryu.app.ws_topology')
+app_manager.require_app('/home/vagrant/comnetsemu/app/realizing_network_slicing/on-demand-sdn-slices/switch_stp_rest.py')
