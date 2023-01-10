@@ -16,7 +16,7 @@
 import json
 import requests
 import time
-
+import utils
 from webob import Response
 from ryu.controller.handler import MAIN_DISPATCHER
 from ryu.controller.handler import set_ev_cls
@@ -77,7 +77,8 @@ class SimpleSwitch13(simple_switch_13.SimpleSwitch13):
 
         self.mac_to_port = {}
         """Dictionary of MAC addresses to port numbers"""
-
+        #OLD method to define slice templates, now imported form JSON file
+        """
         self.slice_templates = [
             {
                 1: {5: 1, 1: 5},
@@ -100,9 +101,11 @@ class SimpleSwitch13(simple_switch_13.SimpleSwitch13):
                 4: {1: 5, 5: 1},
                 5: {}
             }
-        ]
+        ]"""
+        self.slice_templates=utils.load_slice_templates()
         """List of slice templates"""
-
+        #OLD method to define slice qos, now imported form JSON file
+        """
         self.slice_qos = [
             [
                 {
@@ -124,7 +127,8 @@ class SimpleSwitch13(simple_switch_13.SimpleSwitch13):
             ],
             [],
             []
-        ]
+        ]"""
+        self.slice_qos=utils.load_slice_qos()
         """List of slice QoS rules"""
 
         self.stp = kwargs['stplib']
@@ -134,11 +138,11 @@ class SimpleSwitch13(simple_switch_13.SimpleSwitch13):
         """Whether there is a slice currently activating"""
 
         self.no_slice_configuration = {
-            1: {1: [2,3,4,5], 2: [1,3,4,5], 3: [1,2,4,5], 4: [1,2,3,5], 5: [1,2,3,4]},
-            2: {1: [2,3,4,5], 2: [1,3,4,5], 3: [1,2,4,5], 4: [1,2,3,5], 5: [1,2,3,4]},
-            3: {1: [2,3,4,5], 2: [1,3,4,5], 3: [1,2,4,5], 4: [1,2,3,5], 5: [1,2,3,4]},
-            4: {1: [2,3,4,5], 2: [1,3,4,5], 3: [1,2,4,5], 4: [1,2,3,5], 5: [1,2,3,4]},
-            5: {1: [2,3,4,5], 2: [1,3,4,5], 3: [1,2,4,5], 4: [1,2,3,5], 5: [1,2,3,4]}
+            "1": {"1": [2,3,4,5], "2": [1,3,4,5], "3": [1,2,4,5], "4": [1,2,3,5], "5": [1,2,3,4]},
+            "2": {"1": [2,3,4,5], "2": [1,3,4,5], "3": [1,2,4,5], "4": [1,2,3,5], "5": [1,2,3,4]},
+            "3": {"1": [2,3,4,5], "2": [1,3,4,5], "3": [1,2,4,5], "4": [1,2,3,5], "5": [1,2,3,4]},
+            "4": {"1": [2,3,4,5], "2": [1,3,4,5], "3": [1,2,4,5], "4": [1,2,3,5], "5": [1,2,3,4]},
+            "5": {"1": [2,3,4,5], "2": [1,3,4,5], "3": [1,2,4,5], "4": [1,2,3,5], "5": [1,2,3,4]}
         }
         """Default configuration when no slice is active"""
 
@@ -165,7 +169,8 @@ class SimpleSwitch13(simple_switch_13.SimpleSwitch13):
 
         # Register the REST API
         wsgi.register(SwitchController, {switch_instance_name: self})
-
+    def get_slice_topology(self,id):
+        return utils.load_topo_slice()[id]
     def add_flow(self, datapath, priority, match, actions, buffer_id=None):
         """Add a flow to the switch
 
@@ -238,8 +243,8 @@ class SimpleSwitch13(simple_switch_13.SimpleSwitch13):
             self.mac_to_port.setdefault(dpid, {})
 
             # self.logger.info("packet in S%s - %s", dpid, in_port)
-
-            if in_port in self.slice_to_port[dpid]:
+            print(self.slice_to_port)
+            if str(in_port) in self.slice_to_port[str(dpid)]:
                 # learn a mac address to avoid FLOOD next time.
                 self.mac_to_port[dpid][src] = in_port
 
@@ -364,7 +369,7 @@ class SimpleSwitch13(simple_switch_13.SimpleSwitch13):
             for port in switch["ports"]:
                 port_id = self.str_to_port_no(port["port_no"])
                 port = self.dpset.get_port(switch_id, port_id)
-                if port_id not in flatten(list(self.slice_to_port[switch_id].values())) and port_id not in list(self.slice_to_port[switch_id].keys()):
+                if port_id not in flatten(list(self.slice_to_port[str(switch_id)].values())) and str(port_id) not in list(self.slice_to_port[str(switch_id)].keys()):
                     # disable the port
                     bridge.link_down(port)
                 else:
@@ -384,6 +389,11 @@ class SwitchController(ControllerBase):
     def get_switches(self, req, **kwargs):
         """Get the list of switches in the network"""
         return Response(text=json.dumps(self.switch_app.get_switches()), content_type='application/json')
+
+    @route('get-slice-topology', url + "/get_slice_topology/{topoid}", methods=['GET'], requirements={'sliceid': r'\d+'})
+    def get_slice_topology(self, req, topoid, **kwargs):
+        """Get the current applied slice"""
+        return Response(text=json.dumps(self.switch_app.get_slice_topology(int(topoid))), content_type='application/json')
     
     @route('get-hosts', url + '/hosts', methods=['GET'])
     def get_hosts(self, req, **kwargs):
