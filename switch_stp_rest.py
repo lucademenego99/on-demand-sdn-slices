@@ -77,57 +77,10 @@ class SimpleSwitch13(simple_switch_13.SimpleSwitch13):
 
         self.mac_to_port = {}
         """Dictionary of MAC addresses to port numbers"""
-        #OLD method to define slice templates, now imported form JSON file
-        """
-        self.slice_templates = [
-            {
-                1: {5: 1, 1: 5},
-                2: {1: 5, 5: 1},
-                3: {},
-                4: {},
-                5: {}
-            },
-            {
-                1: {},
-                2: {},
-                3: {3: 5, 5: 3},
-                4: {5: 3, 3: 5},
-                5: {}
-            },
-            {
-                1: {5: [1,3], 1: 5, 3: 5},
-                2: {1: 5, 5: 1},
-                3: {},
-                4: {1: 5, 5: 1},
-                5: {}
-            }
-        ]"""
+
         self.slice_templates=utils.load_slice_templates()
         """List of slice templates"""
-        #OLD method to define slice qos, now imported form JSON file
-        """
-        self.slice_qos = [
-            [
-                {
-                    'queue': "1",
-                    'switch_id': 1,
-                    'port_name': "s1-eth5",
-                    'max_rate': "500000",
-                    'nw_dst': "10.0.0.2",
-                    'nw_src': "10.0.0.1",
-                },
-                {
-                    'queue': "2",
-                    'switch_id': 2,
-                    'port_name': "s2-eth5",
-                    'max_rate': "500000",
-                    'nw_dst': "10.0.0.1",
-                    'nw_src': "10.0.0.2",
-                },
-            ],
-            [],
-            []
-        ]"""
+
         self.slice_qos=utils.load_slice_qos()
         """List of slice QoS rules"""
 
@@ -136,6 +89,7 @@ class SimpleSwitch13(simple_switch_13.SimpleSwitch13):
 
         self.slicing = False
         """Whether there is a slice currently activating"""
+
 
         self.no_slice_configuration = {
             "1": {"1": [2,3,4,5], "2": [1,3,4,5], "3": [1,2,4,5], "4": [1,2,3,5], "5": [1,2,3,4]},
@@ -242,8 +196,6 @@ class SimpleSwitch13(simple_switch_13.SimpleSwitch13):
             dpid = datapath.id
             self.mac_to_port.setdefault(dpid, {})
 
-            # self.logger.info("packet in S%s - %s", dpid, in_port)
-            print(self.slice_to_port)
             if str(in_port) in self.slice_to_port[str(dpid)]:
                 # learn a mac address to avoid FLOOD next time.
                 self.mac_to_port[dpid][src] = in_port
@@ -256,7 +208,10 @@ class SimpleSwitch13(simple_switch_13.SimpleSwitch13):
                 actions = [parser.OFPActionOutput(out_port)]
             else:
                 self.logger.info("Can't communicate due to slice restrictions, switch %s, in_port: %s, slice_to_port %s", dpid, in_port, self.slice_to_port)
-                actions = []
+                out = parser.OFPPacketOut(datapath=datapath, buffer_id=msg.buffer_id,
+                                    in_port=in_port, actions=[], data=None)
+                datapath.send_msg(out)
+                return
 
             # install a flow to avoid packet_in next time
             if out_port != ofproto.OFPP_FLOOD:
@@ -439,8 +394,6 @@ class SwitchController(ControllerBase):
                 "max_rate": "10000000000",
                 "queues": [{"max_rate": qos_configuration['max_rate']}]
             }))
-
-            print("RES:", res.text)
 
             requests.post('http://localhost:8080/qos/rules/' + dpid_lib.dpid_to_str(qos_configuration['switch_id']), json.dumps({
                 "match": {

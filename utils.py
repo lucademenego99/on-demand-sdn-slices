@@ -1,7 +1,7 @@
 import json
-templates_path="/home/comnetsemu/on-demand-sdn-slices/resources/slice_templates.json"
-qos_path="/home/comnetsemu/on-demand-sdn-slices/resources/slice_qos.json"
-topo_slices_path="/home/comnetsemu/on-demand-sdn-slices/resources/topologies_templates.json"
+templates_path="resources/slice_templates.json"
+qos_path="resources/slice_qos.json"
+topo_slices_path="resources/topologies_templates.json"
 def load_slice_templates():
     return json.load(open(templates_path))
 def load_slice_qos():
