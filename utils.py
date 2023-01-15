@@ -1,18 +1,34 @@
 import json
-templates_path="resources/slice_templates.json"
-qos_path="resources/slice_qos.json"
-topo_slices_path="resources/topologies_templates.json"
+
+TEMPLATES_PATH="resources/slice_templates.json"
+""" Path to the slice templates json file """
+
+QOS_PATH="resources/slice_qos.json"
+""" Path to the slice qos json file """
+
+TOPO_SLICES_PATH="resources/topologies_templates.json"
+""" Path to the slice topology json file """
+
 def load_slice_templates():
-    return json.load(open(templates_path))
+    """ Load the slice templates from the json file """
+    return json.load(open(TEMPLATES_PATH))
+
 def load_slice_qos():
-    return json.load(open(qos_path))
+    """ Load the slice qos from the json file """
+    return json.load(open(QOS_PATH))
+
 def load_topo_slice():
-    return json.load(open(topo_slices_path))
+    """ Load the slice topology from the json file """
+    return json.load(open(TOPO_SLICES_PATH))
+
 
 def test():
+    """ Test function for the utils module """
     slice_templates=load_slice_templates()
     print(slice_templates)
     slice_qos=load_slice_qos()
     print(slice_qos)
+
 if __name__=="__main__":
+    """ Main function testing the utils module """
     test()

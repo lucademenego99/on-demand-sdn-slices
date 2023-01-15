@@ -40,28 +40,41 @@ The main business logic of the application is inside the file `switch_stp_rest.p
 
 Some ryu components have been modified a bit to meet this project's requirements, namely the `stplib` and the main `hub`.
 
-## REST API routes (swagger docs?)
-Following are the routes exposed by the `switch_stp_rest` Controller.
+## REST API routes
+The list of available endpoints exposed by `switch_stp_rest` have been defined following the OpenAPI 3.0.0 standard. The YAML file containing the list is available in `resources/docs.yaml`. Otherwise, after having started the application, a webpage showcasing all endpoints can be accessed at [http://localhost:8080/docs/index.html](http://localhost:8080/docs/index.html).
 
-...
-...
+As a last alternative, the docs are also served by SwaggerHub: [https://app.swaggerhub.com/apis/lucademenego99/on-demand-sdn-slices/1.0.0](https://app.swaggerhub.com/apis/lucademenego99/on-demand-sdn-slices/1.0.0).
 
 #### Examples
-...
-
+Get all hosts:
+```
+curl -X GET http://127.0.0.1:8080/api/v1/hosts
+```
 
 Create a new slice:
 ```
 curl -X POST -d '{"slice": {"1": {"5": 1, "1": 5}, "2": {"1": 5, "5": 1}, "3": {}, "4": {}, "5": {}}, "qos": [{"queue": "3", "switch_id": 1, "port_name": "s1-eth5", "max_rate": "500000", "nw_dst": "10.0.0.2", "nw_src": "10.0.0.1"}]}'  http://127.0.0.1:8080/api/v1/slice
 ```
 
+Activate a slice:
+```
+curl -X GET http://127.0.0.1:8080/api/v1/slice/1
+```
+
+Delete a slice:
+```
+curl -X DELETE http://127.0.0.1:8080/api/v1/slice/2
+```
+
+Deactivate a slice:
+```
+curl -X GET http://127.0.0.1:8080/api/v1/slice/deactivate
+```
+
+
 # Todos
 
 - instead of redefining ws_topology, stplib and hub, can we just extend them with the few new features we need?
 - make switch_stp_rest's `__init__` independent from the architecture
   - we need to decide how the priority of each switch should be defined: is it possible to choose it based on the links' bandwidth? Do we have this information at startup?
-- TODO web application
-  - maybe add some new listeners to the ws_topology, to update the webapp when the ports' status is changing
-  - should we use a web framework (e.g. Svelte)? I wanted to use it, but when calling the API from another port you get CORS errors, and I couldn't find a way to modify the response headers of the python web server to solve the problem.
-- TODO cli application
 

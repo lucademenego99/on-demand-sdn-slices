@@ -1,0 +1,409 @@
+---
+openapi: 3.0.0
+info:
+  title: on-demand-sdn-slices
+  description: API providing endpoints to manage an on-demand SDN slicing
+  contact:
+    name: Luca De Menego
+    email: luca.demenego@studenti.unitn.it
+  license:
+    name: MIT
+    url: http://opensource.org/licenses/MIT
+  version: 1.0.0
+servers:
+- url: https://virtserver.swaggerhub.com/lucademenego99/on-demand-sdn-slices/1.0.0
+  description: SwaggerHub API Auto Mocking
+- url: http://localhost:8000
+  description: Local server
+tags:
+- name: Get information
+  description: Get info about architecture and parameters
+- name: Slice handling
+  description: Operations available to regular developers
+paths:
+  /switches:
+    get:
+      tags:
+      - Get information
+      summary: Get the list of switches
+      description: |
+        This endpoint allows you to get the list of switches in the network
+      operationId: getSwitches
+      responses:
+        "200":
+          description: List of switches
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SwitchItems'
+  /hosts:
+    get:
+      tags:
+      - Get information
+      summary: Get the list of hosts
+      description: |
+        This endpoint allows you to get the list of hosts in the network
+      operationId: getHosts
+      responses:
+        "200":
+          description: List of hosts
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HostItems'
+  /links:
+    get:
+      tags:
+      - Get information
+      summary: Get the list of links
+      description: |
+        This endpoint allows you to get the list of links in the network
+      operationId: getLinks
+      responses:
+        "200":
+          description: List of links
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LinkItems'
+  /slices:
+    get:
+      tags:
+      - Get information
+      summary: Get the list of available slice templates
+      description: |
+        This endpoint allows you to get the list of available slice templates
+      operationId: getSlices
+      responses:
+        "200":
+          description: List of slice templates
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SliceTemplate'
+  /slice:
+    post:
+      tags:
+      - Slice handling
+      summary: Create a new slice template
+      description: |
+        This endpoint allows you to create a new slice template
+      operationId: createSlice
+      requestBody:
+        description: Inventory item to add
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/slice_body'
+      responses:
+        "200":
+          description: item created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_200'
+        "400":
+          description: Invalid JSON
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_400'
+  /slice/{sliceid}:
+    get:
+      tags:
+      - Slice handling
+      summary: Apply a slice template
+      description: |
+        This endpoint allows you to apply a certain slice template
+      operationId: applySlice
+      parameters:
+      - name: sliceid
+        in: path
+        description: Numeric ID of the slice template
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: integer
+          example: 1
+      responses:
+        "200":
+          description: Operation completed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_200_1'
+        "404":
+          description: No slice available with the given ID
+    delete:
+      tags:
+      - Slice handling
+      summary: Delete a slice template
+      description: |
+        This endpoint allows you to delete a certain slice template
+      operationId: deleteSlice
+      parameters:
+      - name: sliceid
+        in: path
+        description: Numeric ID of the slice template
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: integer
+          example: 1
+      responses:
+        "200":
+          description: Operation completed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_200_2'
+        "404":
+          description: No slice available with the given ID
+  /slice/deactivate:
+    get:
+      tags:
+      - Slice handling
+      summary: Deactivate an applied slice
+      description: |
+        This endpoint allows you to deactivate an activated slice
+      operationId: deactivateSlice
+      responses:
+        "200":
+          description: Operation completed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_200_3'
+components:
+  schemas:
+    Port:
+      required:
+      - dpid
+      - hw_addr
+      - name
+      - port_no
+      type: object
+      properties:
+        dpid:
+          type: string
+          example: "4"
+        port_no:
+          type: string
+          example: "4"
+        hw_addr:
+          type: string
+          example: 5a:68:5a:2c:12:bd
+        name:
+          type: string
+          example: s4-eth4
+    Ports:
+      type: array
+      items:
+        $ref: '#/components/schemas/Port'
+    SwitchItem:
+      required:
+      - dpid
+      - ports
+      type: object
+      properties:
+        dpid:
+          type: string
+          example: "4"
+        ports:
+          $ref: '#/components/schemas/Ports'
+    SwitchItems:
+      type: array
+      items:
+        $ref: '#/components/schemas/SwitchItem'
+    HostItem:
+      required:
+      - ipv4
+      - ipv6
+      - mac
+      - port
+      type: object
+      properties:
+        mac:
+          type: string
+          example: 00:00:00:00:00:01
+        ipv4:
+          type: array
+          items:
+            type: string
+            example: 192.168.0.4
+        ipv6:
+          type: array
+          items:
+            type: string
+            example: fe80::200:ff:fe00:1
+        port:
+          $ref: '#/components/schemas/Port'
+    HostItems:
+      type: array
+      items:
+        $ref: '#/components/schemas/HostItem'
+    LinkItem:
+      required:
+      - dst
+      - src
+      type: object
+      properties:
+        src:
+          $ref: '#/components/schemas/Port'
+        dst:
+          $ref: '#/components/schemas/Port'
+    LinkItems:
+      type: array
+      items:
+        $ref: '#/components/schemas/LinkItem'
+    SliceTemplate:
+      required:
+      - "1"
+      - "2"
+      - "3"
+      - "4"
+      - "5"
+      type: object
+      properties:
+        "1":
+          $ref: '#/components/schemas/SliceMapping'
+        "2":
+          $ref: '#/components/schemas/SliceMapping'
+        "3":
+          $ref: '#/components/schemas/SliceMapping'
+        "4":
+          $ref: '#/components/schemas/SliceMapping'
+        "5":
+          $ref: '#/components/schemas/SliceMapping'
+    SliceTemplates:
+      required:
+      - slices
+      type: object
+      properties:
+        slices:
+          type: array
+          items:
+            $ref: '#/components/schemas/SliceTemplate'
+    SliceMapping:
+      type: object
+      anyOf:
+      - required:
+        - "1"
+        type: object
+        properties:
+          "1":
+            type: array
+            items:
+              type: number
+              example: 3
+      - required:
+        - "2"
+        type: object
+        properties:
+          "1":
+            type: array
+            items:
+              type: number
+              example: 3
+    SliceQos:
+      required:
+      - max_rate
+      - nw_dst
+      - nw_src
+      - port_name
+      - queue
+      - switch_id
+      type: object
+      properties:
+        queue:
+          type: string
+          example: "1"
+        switch_id:
+          type: integer
+          example: 1
+        port_name:
+          type: string
+          example: s1-eth5
+        max_rate:
+          type: string
+          example: "500000"
+        nw_dst:
+          type: string
+          example: 10.0.0.2
+        nw_src:
+          type: string
+          example: 10.0.0.1
+    slice_body:
+      required:
+      - qos
+      - slice
+      type: object
+      properties:
+        slice:
+          $ref: '#/components/schemas/SliceTemplate'
+        qos:
+          $ref: '#/components/schemas/SliceQos'
+    inline_response_200:
+      required:
+      - qos
+      - slice
+      - status
+      type: object
+      properties:
+        status:
+          type: string
+          example: ok
+        slice:
+          $ref: '#/components/schemas/SliceTemplate'
+        qos:
+          $ref: '#/components/schemas/SliceQos'
+    inline_response_400:
+      required:
+      - message
+      - status
+      type: object
+      properties:
+        status:
+          type: string
+          example: error
+        message:
+          type: string
+          example: Invalid JSON
+    inline_response_200_1:
+      required:
+      - slice
+      - status
+      type: object
+      properties:
+        status:
+          type: string
+          example: ok
+        slice:
+          type: integer
+          example: 1
+    inline_response_200_2:
+      required:
+      - qos
+      - slices
+      - status
+      type: object
+      properties:
+        status:
+          type: string
+          example: ok
+        slices:
+          $ref: '#/components/schemas/SliceTemplates'
+        qos:
+          type: array
+          items:
+            $ref: '#/components/schemas/SliceQos'
+    inline_response_200_3:
+      required:
+      - status
+      type: object
+      properties:
+        status:
+          type: string
+          example: ok

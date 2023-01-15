@@ -26,7 +26,7 @@ Run this application by executing:
 The application will start a Ryu controller and a web server. The web
 server will be accessible at http://localhost:8080. The Ryu controller
 will expose a REST API at http://localhost:8080/api/v1. More information
-about the REST API can be found in the README.md file.
+about the REST API can be found in the README.md file or at http://localhost:8080/docs/index.html.
 
 The application will also expose a WebSocket API at
 ws://localhost:8080/v1.0/topology/ws allowing to subscribe
@@ -68,6 +68,10 @@ class GUIServerController(ControllerBase):
         # Serve static files from the 'html' directory
         path = "./html/"
         self.static_app = DirectoryApp(path)
+    
+    @route('docs', '/docs/*filename')
+    def docs_handler(self, req, **kwargs):
+        return self.static_app(req)
 
     @route('topology', '/{filename:[^/]*}')
     def static_handler(self, req, **kwargs):

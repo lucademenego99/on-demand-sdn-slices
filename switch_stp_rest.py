@@ -90,7 +90,6 @@ class SimpleSwitch13(simple_switch_13.SimpleSwitch13):
         self.slicing = False
         """Whether there is a slice currently activating"""
 
-
         self.no_slice_configuration = {
             "1": {"1": [2,3,4,5], "2": [1,3,4,5], "3": [1,2,4,5], "4": [1,2,3,5], "5": [1,2,3,4]},
             "2": {"1": [2,3,4,5], "2": [1,3,4,5], "3": [1,2,4,5], "4": [1,2,3,5], "5": [1,2,3,4]},
@@ -456,12 +455,12 @@ class SwitchController(ControllerBase):
         slice_configuration = req["slice"]
         qos_configuration = req["qos"]
 
-        # convert all keys of slice_configuration to int
-        slice_configuration = {int(k): v for k, v in slice_configuration.items()}
+        # convert all keys of slice_configuration to str
+        slice_configuration = {str(k): v for k, v in slice_configuration.items()}
 
-        # For each value in slice_configuration, convert all keys to int
+        # For each value in slice_configuration, convert all keys to str
         for k, v in slice_configuration.items():
-            slice_configuration[k] = {int(k2): v2 for k2, v2 in v.items()}
+            slice_configuration[k] = {str(k2): v2 for k2, v2 in v.items()}
 
         # Add the slice to the slice_templates
         switch.slice_templates.append(slice_configuration)
