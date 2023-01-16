@@ -103,15 +103,15 @@ class SimpleSwitch13(simple_switch_13.SimpleSwitch13):
         """Current slice configuration"""
 
         config = {dpid_lib.str_to_dpid('0000000000000001'):
-                  {'bridge': {'priority': 0x8000, 'fwd_delay': 2}},
+                  {'bridge': {'priority': 0x8000, 'fwd_delay': 15}},
                   dpid_lib.str_to_dpid('0000000000000002'):
-                  {'bridge': {'priority': 0x9000, 'fwd_delay': 2}},
+                  {'bridge': {'priority': 0x9000, 'fwd_delay': 15}},
                   dpid_lib.str_to_dpid('0000000000000003'):
-                  {'bridge': {'priority': 0xa000, 'fwd_delay': 2}},
+                  {'bridge': {'priority': 0xa000, 'fwd_delay': 15}},
                   dpid_lib.str_to_dpid('0000000000000004'):
-                  {'bridge': {'priority': 0xb000, 'fwd_delay': 2}},
+                  {'bridge': {'priority': 0xb000, 'fwd_delay': 15}},
                   dpid_lib.str_to_dpid('0000000000000005'):
-                  {'bridge': {'priority': 0xc000, 'fwd_delay': 2}}}
+                  {'bridge': {'priority': 0xc000, 'fwd_delay': 15}}}
         """STP configuration"""
 
         # Register the STP configuration
@@ -234,7 +234,7 @@ class SimpleSwitch13(simple_switch_13.SimpleSwitch13):
         """
 
         # Send test event to websocket
-        self.send_event("wstopology", EventTest(4))
+        #self.send_event("wstopology", EventTest(4))
 
         dp = ev.dp
         dpid_str = dpid_lib.dpid_to_str(dp.id)
@@ -363,6 +363,13 @@ class SwitchController(ControllerBase):
     def get_slices(self, req, **kwargs):
         """Get the list of slices"""
         return Response(content_type='application/json', text=json.dumps({"slices": self.switch_app.slice_templates, "qos": self.switch_app.slice_qos}))
+
+    @route('event_test', url + "/event", methods=['GET'])
+    def get_slices(self, req, **kwargs):
+        """Get the list of slices"""
+        self.switch_app.send_event("wstopology", EventTest(4))
+        print("sending")
+        return Response(content_type='application/json', text=json.dumps({"slices": "ok"}))
 
     @route('apply-slice', url + "/slice/{sliceid}", methods=['GET'], requirements={'sliceid': r'\d+'})
     def apply_slice(self, req, sliceid, **kwargs):

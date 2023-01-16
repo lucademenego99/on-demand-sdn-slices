@@ -33,7 +33,7 @@ $ wscat -c ws://localhost:8080/v1.0/topology/ws
 """
 
 from socket import error as SocketError
-from tinyrpc.exc import InvalidReplyError
+from tinyrpc.exc import InvalidReplyError,RPCError
 
 
 from ryu.app.wsgi import (
@@ -76,8 +76,9 @@ class WebSocketTopology(app_manager.RyuApp):
     #     msg = ev.switch.to_dict()
     #     self._rpc_broadcall('event_switch_enter', msg)
     
-    @set_ev_cls(switch_stp_rest.EventTest, MAIN_DISPATCHER)
+    @set_ev_cls(switch_stp_rest.EventTest)
     def _event_test(self, ev):
+        print("test")
         # Handle the custom event (sent with `self.send_event("wstopology", EventTest(4))`)
         # NOTE: this event will fire an exception because there is no event_test method on the websocket handler
         self._rpc_broadcall('event_test', None)
@@ -101,6 +102,7 @@ class WebSocketTopology(app_manager.RyuApp):
 
     @set_ev_cls(event.EventLinkDelete)
     def _event_link_delete_handler(self, ev):
+        print("event delete")
         msg = ev.link.to_dict()
         self._rpc_broadcall('event_link_delete', msg)
 
@@ -116,11 +118,15 @@ class WebSocketTopology(app_manager.RyuApp):
             #       RPCClient#get_proxy(one_way=True) does not work well
             rpc_server = rpc_client.get_proxy()
             try:
+                print("event here")
                 getattr(rpc_server, func_name)(msg)
+                print("arrived here")
             except SocketError:
                 self.logger.debug('WebSocket disconnected: %s', rpc_client.ws)
                 disconnected_clients.append(rpc_client)
             except InvalidReplyError as e:
+                self.logger.error(e)
+            except RPCError as e:
                 self.logger.error(e)
 
         for client in disconnected_clients:
