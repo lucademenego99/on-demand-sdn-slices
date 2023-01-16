@@ -21,7 +21,6 @@ from webob import Response
 from ryu.controller.handler import MAIN_DISPATCHER
 from ryu.controller.handler import set_ev_cls
 from ryu.ofproto import ofproto_v1_3
-from ryu.controller import event
 from ryu.lib.packet import ether_types
 from ryu.lib import dpid as dpid_lib
 import stplib
@@ -29,7 +28,8 @@ from ryu.lib.packet import packet
 from ryu.lib.packet import ethernet
 from ryu.app.wsgi import ControllerBase, WSGIApplication, route
 from ryu.controller import dpset
-from ryu.app import simple_switch_13
+from ryu.app.simple_switch_13 import SimpleSwitch13
+from events_handler import EventsHandler
 
 switch_instance_name = 'switch_api_app'
 """Switch application name, used to link the REST API controller to the switch"""
@@ -39,12 +39,7 @@ _PORTNO_LEN = 8
 url = '/api/v1'
 """Base URL for the REST API"""
 
-class EventTest(event.EventBase):
-    def __init__(self, dp):
-        super(EventTest, self).__init__()
-        self.dp = dp
-
-class SimpleSwitch13(simple_switch_13.SimpleSwitch13):
+class SimpleSwitch13(SimpleSwitch13):
     """Base Switch class, called via ryu-manager"""
 
     OFP_VERSIONS = [ofproto_v1_3.OFP_VERSION]
@@ -102,16 +97,18 @@ class SimpleSwitch13(simple_switch_13.SimpleSwitch13):
         self.slice_to_port = self.no_slice_configuration
         """Current slice configuration"""
 
+        self.events_handler = EventsHandler(self.send_event, "wstopology")
+
         config = {dpid_lib.str_to_dpid('0000000000000001'):
-                  {'bridge': {'priority': 0x8000, 'fwd_delay': 15}},
+                  {'bridge': {'priority': 0x8000, 'fwd_delay': 3}},
                   dpid_lib.str_to_dpid('0000000000000002'):
-                  {'bridge': {'priority': 0x9000, 'fwd_delay': 15}},
+                  {'bridge': {'priority': 0x9000, 'fwd_delay': 3}},
                   dpid_lib.str_to_dpid('0000000000000003'):
-                  {'bridge': {'priority': 0xa000, 'fwd_delay': 15}},
+                  {'bridge': {'priority': 0xa000, 'fwd_delay': 3}},
                   dpid_lib.str_to_dpid('0000000000000004'):
-                  {'bridge': {'priority': 0xb000, 'fwd_delay': 15}},
+                  {'bridge': {'priority': 0xb000, 'fwd_delay': 3}},
                   dpid_lib.str_to_dpid('0000000000000005'):
-                  {'bridge': {'priority': 0xc000, 'fwd_delay': 15}}}
+                  {'bridge': {'priority': 0xc000, 'fwd_delay': 3}}}
         """STP configuration"""
 
         # Register the STP configuration
@@ -233,9 +230,6 @@ class SimpleSwitch13(simple_switch_13.SimpleSwitch13):
             ev: The EventTopologyChange object
         """
 
-        # Send test event to websocket
-        #self.send_event("wstopology", EventTest(4))
-
         dp = ev.dp
         dpid_str = dpid_lib.dpid_to_str(dp.id)
         msg = 'Receive topology change event. Flush MAC table.'
@@ -330,7 +324,6 @@ class SimpleSwitch13(simple_switch_13.SimpleSwitch13):
                     # enable the port
                     bridge.link_up(port)
 
-
 class SwitchController(ControllerBase):
     """Basic controller exposing the REST API"""
     
@@ -365,11 +358,9 @@ class SwitchController(ControllerBase):
         return Response(content_type='application/json', text=json.dumps({"slices": self.switch_app.slice_templates, "qos": self.switch_app.slice_qos}))
 
     @route('event_test', url + "/event", methods=['GET'])
-    def get_slices(self, req, **kwargs):
-        """Get the list of slices"""
-        self.switch_app.send_event("wstopology", EventTest(4))
-        print("sending")
-        return Response(content_type='application/json', text=json.dumps({"slices": "ok"}))
+    def send_test_event(self, req, **kwargs):
+        self.switch_app.events_handler.send_test(1)
+        return Response(content_type='application/json', text=json.dumps({"event": "ok"}))
 
     @route('apply-slice', url + "/slice/{sliceid}", methods=['GET'], requirements={'sliceid': r'\d+'})
     def apply_slice(self, req, sliceid, **kwargs):

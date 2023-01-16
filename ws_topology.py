@@ -46,15 +46,14 @@ from ryu.base import app_manager
 from ryu.topology import event, switches
 from ryu.ofproto import ofproto_v1_3
 from ryu.controller.handler import set_ev_cls
-from ryu.controller.handler import MAIN_DISPATCHER
-import switch_stp_rest
+import custom_events
 import stplib
 
 class WebSocketTopology(app_manager.RyuApp):
     _CONTEXTS = {
         'stplib': stplib.Stp,
         'wsgi': WSGIApplication,
-        'switches': switches.Switches,
+        'switches': switches.Switches
     }
     OFP_VERSIONS = [ofproto_v1_3.OFP_VERSION]
 
@@ -76,7 +75,7 @@ class WebSocketTopology(app_manager.RyuApp):
     #     msg = ev.switch.to_dict()
     #     self._rpc_broadcall('event_switch_enter', msg)
     
-    @set_ev_cls(switch_stp_rest.EventTest)
+    @set_ev_cls(custom_events.EventTest)
     def _event_test(self, ev):
         print("test")
         # Handle the custom event (sent with `self.send_event("wstopology", EventTest(4))`)
@@ -118,9 +117,7 @@ class WebSocketTopology(app_manager.RyuApp):
             #       RPCClient#get_proxy(one_way=True) does not work well
             rpc_server = rpc_client.get_proxy()
             try:
-                print("event here")
                 getattr(rpc_server, func_name)(msg)
-                print("arrived here")
             except SocketError:
                 self.logger.debug('WebSocket disconnected: %s', rpc_client.ws)
                 disconnected_clients.append(rpc_client)
