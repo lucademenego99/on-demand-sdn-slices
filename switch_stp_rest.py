@@ -379,28 +379,36 @@ class SwitchController(ControllerBase):
 
         # set qos
         for qos_configuration in switch.slice_qos[int(sliceid)-1]:
+            print("Applying qos configuration: " + str(qos_configuration))
             # Set the ovsdb_addr to the switch
             requests.put('http://localhost:8080/v1.0/conf/switches/' + dpid_lib.dpid_to_str(qos_configuration['switch_id']) + '/ovsdb_addr', data='"tcp:127.0.0.1:6632"')
 
             # Wait for the switch to be configured before applying the qos
-            time.sleep(0.1)
+            time.sleep(0.3)
 
             res = requests.post('http://localhost:8080/qos/queue/' + dpid_lib.dpid_to_str(qos_configuration['switch_id']), json.dumps({
                 "port_name": qos_configuration["port_name"],
                 "type": "linux-htb",
                 "max_rate": "10000000000",
-                "queues": [{"max_rate": qos_configuration['max_rate']}]
+                "queues": [{"max_rate": queue["max_rate"]} for queue in qos_configuration["queues"]]
             }))
+            print(res.text)
 
-            requests.post('http://localhost:8080/qos/rules/' + dpid_lib.dpid_to_str(qos_configuration['switch_id']), json.dumps({
-                "match": {
-                    "nw_dst": qos_configuration["nw_dst"],
-                    "nw_src": qos_configuration["nw_src"],
-                },
-                "actions": {
-                    "queue": qos_configuration["queue"]
-                }
-            }))
+            time.sleep(0.1)
+
+            for index, match in enumerate(qos_configuration["match"]):
+                res = requests.post('http://localhost:8080/qos/rules/' + dpid_lib.dpid_to_str(qos_configuration['switch_id']), json.dumps({
+                    "match": {
+                        "nw_dst": match["nw_dst"],
+                        "nw_src": match["nw_src"],
+                    },
+                    "actions": {
+                        "queue": qos_configuration["queues"][index]["queue"],
+                    }
+                }))
+                print(res.text)
+
+                time.sleep(0.1)
 
         # Define the new slicing
         switch.slice_to_port = switch.slice_templates[int(sliceid)-1]

@@ -1,20 +1,44 @@
 [
     [
         {
-            "queue": "1",
             "switch_id": 1,
             "port_name": "s1-eth5",
-            "max_rate": "500000",
-            "nw_dst": "10.0.0.2",
-            "nw_src": "10.0.0.1"
+            "match": [
+                {
+                    "nw_dst": "10.0.0.1",
+                    "nw_src": "10.0.0.2"
+                },
+                {
+                    "nw_dst": "10.0.0.1",
+                    "nw_src": "10.0.0.3"
+                }
+            ],
+            "queues": [
+                {
+                    "queue": "0",
+                    "max_rate": "500000"
+                },
+                {
+                    "queue": "1",
+                    "max_rate": "1000000"
+                }
+            ]
         },
         {
-            "queue": "2",
             "switch_id": 2,
             "port_name": "s2-eth5",
-            "max_rate": "500000",
-            "nw_dst": "10.0.0.1",
-            "nw_src": "10.0.0.2"
+            "match": [
+                {
+                    "nw_dst": "10.0.0.2",
+                    "nw_src": "10.0.0.1"
+                }
+            ],
+            "queues": [
+                {
+                    "queue": "0",
+                    "max_rate": "500000"
+                }
+            ]
         }
     ],
     [],
