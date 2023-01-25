@@ -7,6 +7,139 @@ var CONF = {
     width : 800,
     height : 800
 };
+var topology_template={
+    "hosts":[
+        {
+            "host_id":"h1",
+            "posx":510,
+            "posy":20
+        },
+        {
+            "host_id":"h2",
+            "posx":750,
+            "posy":200
+        },
+        {
+            "host_id":"h3",
+            "posx":650,
+            "posy":500
+        },
+        {
+            "host_id":"h4",
+            "posx":370,
+            "posy":500
+        },
+        {
+            "host_id":"h5",
+            "posx":270,
+            "posy":200
+        }
+    ],
+    "switches":[
+        {
+            "host_id":"s1",
+            "posx":510,
+            "posy":110
+        },
+        {
+            "host_id":"s2",
+            "posx":670,
+            "posy":230
+        },
+        {
+            "host_id":"s3",
+            "posx":610,
+            "posy":430
+        },
+        {
+            "host_id":"s4",
+            "posx":410,
+            "posy":430
+        },
+        {
+            "host_id":"s5",
+            "posx":350,
+            "posy":230
+        }
+    ],
+    "links":[
+        {
+            "src":["hosts",0],
+            "dst":["switches",0],
+            "active":false
+        },
+        {
+            "src":["hosts",1],
+            "dst":["switches",1],
+            "active":false
+        },
+        {
+            "src":["hosts",2],
+            "dst":["switches",2],
+            "active":false
+        },
+        {
+            "src":["hosts",3],
+            "dst":["switches",3],
+            "active":false
+        },
+        {
+            "src":["hosts",4],
+            "dst":["switches",4],
+            "active":false
+        },
+        {//s1eth1-s2eth1
+            "src":["switches",0],
+            "dst":["switches",1],
+            "active":false
+        },
+        {//s1eth2-s3eth1
+            "src":["switches",0],
+            "dst":["switches",2],
+            "active":false
+        },
+        {//s1eth3-s4eth1
+            "src":["switches",0],
+            "dst":["switches",3],
+            "active":false
+        },
+        {//s1eth4-s5eth1
+            "src":["switches",0],
+            "dst":["switches",4],
+            "active":false
+        },
+        {//s2eth2-s3eth2
+            "src":["switches",1],
+            "dst":["switches",2],
+            "active":false
+        },
+        {//s2eth3-s4eth2
+            "src":["switches",1],
+            "dst":["switches",3],
+            "active":false
+        },
+        {
+            "src":["switches",1],
+            "dst":["switches",4],
+            "active":false
+        },
+        {
+            "src":["switches",2],
+            "dst":["switches",3],
+            "active":false
+        },
+        {
+            "src":["switches",2],
+            "dst":["switches",4],
+            "active":false
+        },
+        {
+            "src":["switches",3],
+            "dst":["switches",4],
+            "active":false
+        }
+    ]
+}
 // append the svg object to the body of the page, basically inserting a canvas in which add the other objects
 var svg = d3.select("#network_graph")
 .append("svg")
@@ -15,8 +148,81 @@ var svg = d3.select("#network_graph")
 .append("g")
   .attr("transform",
         "translate(" + CONF.margin.left + "," + CONF.margin.top + ")");
-function get_topology(topo_id) {
-    d3.json("/api/v1/get_slice_topology/"+topo_id, function(error, data) {
+
+var rpc = {
+    event_switch_enter: function (params) {
+        return "";
+    },
+    event_switch_leave: function (params) {
+        return "";
+    },
+    event_link_add: function (links) {
+        return "";
+    },
+    event_link_delete: function (links) {
+        return "";
+    },
+    event_test: function (topo_id) {
+        get_topology(1);
+        console.log("event",topo_id)
+        return "";
+    },
+    event_slice_update: function(slice){
+        update_view(slice[0])
+    }
+}
+function update_view(slice){
+    r= Array.from(document.getElementsByClassName("activeLink")).forEach((el)=> el.classList.remove("activeLink"))
+    /*console.log(r)
+    for(var line of r){
+        console.log(line)
+        line.classList.remove("activeLink")
+    }*/
+    console.log(slice)
+    for( const switch_id in slice){
+        console.log(slice[switch_id])
+        for(const eth in slice[switch_id]){
+            console.log("s"+switch_id+"eth"+eth)
+            line=document.getElementById("s"+switch_id+"eth"+eth)
+            if(line)
+            line.classList.add("activeLink");
+        }
+    }
+}  
+function load_view(){
+    fetch("http://localhost:8080/api/v1/slice_topology")
+    .then((response) => response.json())
+    .then((data) => update_view(data));
+}
+var ws = new WebSocket("ws://" + location.host + "/v1.0/topology/ws");
+ws.onmessage = function(event) {
+    console.log("Received message: " + event.data);
+    var data = JSON.parse(event.data);
+
+    if (rpc[data.method]) {
+        var result = rpc[data.method](data.params);
+
+        var ret = {"id": data.id, "jsonrpc": "2.0", "result": result};
+        this.send(JSON.stringify(ret));
+    } else {
+        this.send(JSON.stringify({"id": data.id, "jsonrpc": "2.0", "error": {"message": "unknown method", "code": 34}}));
+    }
+}
+function generateID(link){
+    
+    let src_host="s"+(link.src[1]+1)
+    let src_eth="eth"+(link.dst[1])
+    let dst_host="s"+(link.dst[1]+1)
+    let dst_eth="eth"+(link.src[1]+1)
+    if(link.src[0]=="hosts"){
+        src_host="s"+(link.src[1]+1)
+        src_eth="eth5"
+    }
+    return src_host+src_eth
+}
+function load_topology(data){
+    svg.selectAll("*").remove()
+    console.log("requesting topo", data)
         //console.log(data)
         // Initialize the links
         var link = svg
@@ -24,8 +230,11 @@ function get_topology(topo_id) {
             .data(data.links)
             .enter()
             .append("line")
+            .attr("id",function(d){return generateID(d)})
+            .attr("class", "link")
             .style("stroke", function(d){return d.active?"#00cc00":"#aaa"})
-            .attr("stroke-width", function(d) { return ((d.active+1) * 1.5); })
+            .attr("stroke-width", function(d) { return ((d.active+1) * 2.5); })
+            .on("click", function(d) { document.getElementById("details").innerText="link "+data[d.src[0]][d.src[1]].host_id +" "+ data[d.dst[0]][d.dst[1]].host_id; })
         link
             .attr("x1", function(d) { return data[d.src[0]][d.src[1]].posx; })
             .attr("y1", function(d) { return data[d.src[0]][d.src[1]].posy; })
@@ -37,7 +246,56 @@ function get_topology(topo_id) {
         .selectAll("switch")
         .data(data.switches)
         .enter().append("g")
-        .attr("class", "switch");
+        .attr("class", "switch")
+        .on("click", function(d) { 
+            switch_id=String(d.host_id[1]).padStart(16, '0');
+            fetch("http://localhost:8080/qos/rules/"+switch_id)
+            .then((res_rules) => res_rules.json())
+            .then((rules) => {
+                console.log(rules)
+                fetch("http://localhost:8080/qos/queue/"+switch_id)
+                .then((res_queue) => res_queue.json())
+                .then((queues) =>{
+                    document.getElementById("details").innerHTML=""
+                    console.log(queues);
+                    tbl = document.createElement('table');
+                    try{
+                    rules=rules[0]["command_result"][0]["qos"]
+                    queues=queues[0]["command_result"]["details"][Object.keys(queues[0]["command_result"]["details"])[0]]
+                    console.log("2",queues);
+                    console.log("2",rules);
+                    
+                    head=document.createElement("tr")
+                    head.innerHTML="<th>src_IP</th><th>dst_IP</th><th>max-rate</th>"
+
+                    tbl.appendChild(head)
+                    for(let i=0;i<rules.length;i++){
+                        tr=document.createElement("tr")
+                        src=document.createElement("td")
+                        dst=document.createElement("td")
+                        config=document.createElement("td")
+                        src.innerText=rules[i]["nw_src"]
+                        dst.innerText=rules[i]["nw_dst"]
+                        config.innerText=queues[i]["config"]["max-rate"]+" bps"
+
+                        tr.appendChild(src)
+                        tr.appendChild(dst)
+                        tr.appendChild(config)
+                        tbl.appendChild(tr)
+                    }
+                    document.getElementById("details").innerHTML="<p>QoS rules defined on switch "+d.host_id[1]+"</p>"
+                    document.getElementById("details").appendChild(tbl)
+                }
+                catch{
+                    document.getElementById("details").innerHTML="<p>No QoS rules defined on switch "+d.host_id[1]+"</p>"
+                }
+                });
+            });
+            
+            
+
+         })
+        ;
         switches.append("image")
             .attr("xlink:href", "./router.svg")
             .attr("width", CONF.image.width)
@@ -75,15 +333,17 @@ function get_topology(topo_id) {
             });
         
         
-    });
+}
+function get_topology(topo_id) {
+   // d3.json("/api/v1/get_slice_topology/"+topo_id
 }
 
 function main() {
-    get_topology(0);
+    load_topology(topology_template);
+    load_view();
 }
-function load_topology(topo_id){
+function load_slice(topo_id){
 
-    svg.selectAll("*").remove()
     if(topo_id>0){
         fetch("http://localhost:8080/api/v1/slice/"+topo_id)
     }
@@ -91,6 +351,7 @@ function load_topology(topo_id){
         fetch("http://localhost:8080/api/v1/slice/deactivate")
     }
     get_topology(topo_id);
+
 
 }
 main();

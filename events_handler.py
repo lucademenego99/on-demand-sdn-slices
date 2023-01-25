@@ -18,6 +18,8 @@ class EventsHandler(object):
         Send a test event to the GUI
         :param arg: event argument
         """
-        self.send_event(self.to, EventTest(arg))
+        print("sending event")
+        print(type(arg))
+        self.send_event(self.to, arg)
     
     # TODO: Add more events here

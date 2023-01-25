@@ -11,7 +11,117 @@ body {
     width: 100%;
     height: 100%;
 }
+table{
+    width: 100%;
+    height: 100%;
+
+}
 #network_graph{
     width: 100%;
     height: 100%;
+    margin: auto;
+}
+.switch:hover{
+  cursor: pointer;
+}
+.link{
+    margin: 5px;
+}
+.header ul {
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    background-color: #333;
+  }
+  
+ .header li {
+    float: left;
+  }
+  
+ .header li a {
+    display: block;
+    color: white;
+    text-align: center;
+    padding: 14px 16px;
+    text-decoration: none;
+  }
+  
+  /* Change the link color to #111 (black) on hover */
+  .header li a:hover {
+    background-color: #111;
+  }
+
+  
+  .sidenav div {
+    padding: 8px 8px 8px 32px;
+    text-decoration: none;
+    font-size: 15px;
+    color: white;
+    display: block;
+}
+
+/* Change the link color to #111 (black) on hover */
+.sidenav div:hover {
+  background-color: #111;
+  cursor: pointer;
+}
+  #content{
+    margin-left: 0;
+    width: 100%;
+    height: 1200px;
+  }
+  .w3-twothird{
+    height: 800px;
+  }
+  #topology_view{
+    min-width: 750px;
+    align-items: center;
+  }
+  #details_view{
+    min-width: 150px;
+  }
+.activeLink{
+  stroke:#00cc00 !important;
+  stroke-width: 5px;
+}
+
+.sidenav {
+  height: max-content; /* 100% Full-height */
+  width: 180px; /* 0 width - change this with JavaScript */
+  position: absolute;
+  top: 0px; /* Stay at the top */
+  left: 0;
+  background-color: #333; /* Black*/
+  opacity: 100%  ;
+  overflow-x: hidden; /* Disable horizontal scroll */
+  display:block;
+  border-radius: 0 0 10px 0;
+  padding-top: 10px;
+  cursor: default;
+}
+.sidenav hr{
+  width: 170px;
+  margin-left: auto;
+  margin-right: auto;
+  border-color: #818181;
+}
+.sidenav p {
+  padding: 10px 0px 10px 8px;
+  text-decoration: none;
+  font-size: 18px;
+  color: white;
+  display: block;
+}
+/* The navigation menu links */
+.sidenav a {
+  padding: 8px 8px 8px 32px;
+  text-decoration: none;
+  font-size: 15px;
+  color: white;
+  display: block;
+}
+.sidenav a:hover{
+  
+  background-color: #111;
 }

@@ -81,6 +81,12 @@ class WebSocketTopology(app_manager.RyuApp):
         # Handle the custom event (sent with `self.send_event("wstopology", EventTest(4))`)
         # NOTE: this event will fire an exception because there is no event_test method on the websocket handler
         self._rpc_broadcall('event_test', None)
+
+    @set_ev_cls(custom_events.SliceUpdateEvent)
+    def _event_slice_update(self, ev):
+        # Handle the custom event (sent with `self.send_event("wstopology", EventTest(4))`)
+        # NOTE: this event will fire an exception because there is no event_test method on the websocket handler
+        self._rpc_broadcall('event_slice_update', ev.slice_template)
     
     # Example of how to listen for events from stplib
     # @set_ev_cls(stplib.EventPacketIn, MAIN_DISPATCHER)
@@ -125,6 +131,7 @@ class WebSocketTopology(app_manager.RyuApp):
                 self.logger.error(e)
             except RPCError as e:
                 self.logger.error(e)
+                self.logger.error(str(func_name))
 
         for client in disconnected_clients:
             self.rpc_clients.remove(client)

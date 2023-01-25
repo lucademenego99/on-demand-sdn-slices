@@ -4,7 +4,7 @@
             "queue": "1",
             "switch_id": 1,
             "port_name": "s1-eth5",
-            "max_rate": "500000",
+            "max_rate": "500",
             "nw_dst": "10.0.0.2",
             "nw_src": "10.0.0.1"
         },
@@ -12,7 +12,7 @@
             "queue": "2",
             "switch_id": 2,
             "port_name": "s2-eth5",
-            "max_rate": "500000",
+            "max_rate": "1000",
             "nw_dst": "10.0.0.1",
             "nw_src": "10.0.0.2"
         }
