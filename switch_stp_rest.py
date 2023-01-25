@@ -100,15 +100,15 @@ class SimpleSwitch13(SimpleSwitch13):
         self.events_handler = EventsHandler(self.send_event, "wstopology")
 
         config = {dpid_lib.str_to_dpid('0000000000000001'):
-                  {'bridge': {'priority': 0x8000, 'fwd_delay': 3}},
+                  {'bridge': {'priority': 0x8000, 'fwd_delay': 5}},
                   dpid_lib.str_to_dpid('0000000000000002'):
-                  {'bridge': {'priority': 0x9000, 'fwd_delay': 3}},
+                  {'bridge': {'priority': 0x9000, 'fwd_delay': 5}},
                   dpid_lib.str_to_dpid('0000000000000003'):
-                  {'bridge': {'priority': 0xa000, 'fwd_delay': 3}},
+                  {'bridge': {'priority': 0xa000, 'fwd_delay': 5}},
                   dpid_lib.str_to_dpid('0000000000000004'):
-                  {'bridge': {'priority': 0xb000, 'fwd_delay': 3}},
+                  {'bridge': {'priority': 0xb000, 'fwd_delay': 5}},
                   dpid_lib.str_to_dpid('0000000000000005'):
-                  {'bridge': {'priority': 0xc000, 'fwd_delay': 3}}}
+                  {'bridge': {'priority': 0xc000, 'fwd_delay': 5}}}
         """STP configuration"""
 
         # Register the STP configuration
@@ -193,15 +193,14 @@ class SimpleSwitch13(SimpleSwitch13):
             self.mac_to_port.setdefault(dpid, {})
 
             if str(in_port) in self.slice_to_port[str(dpid)]:
-                # learn a mac address to avoid FLOOD next time.
                 self.mac_to_port[dpid][src] = in_port
 
                 if dst in self.mac_to_port[dpid]:
-                    out_port = self.mac_to_port[dpid][dst]
+                    out_port = [self.mac_to_port[dpid][dst]]
                 else:
-                    out_port = ofproto.OFPP_FLOOD
+                    out_port = self.slice_to_port[str(dpid)][str(in_port)]
 
-                actions = [parser.OFPActionOutput(out_port)]
+                actions = [parser.OFPActionOutput(int(out)) for out in out_port]
             else:
                 self.logger.info("Can't communicate due to slice restrictions, switch %s, in_port: %s, slice_to_port %s", dpid, in_port, self.slice_to_port)
                 out = parser.OFPPacketOut(datapath=datapath, buffer_id=msg.buffer_id,
@@ -210,7 +209,7 @@ class SimpleSwitch13(SimpleSwitch13):
                 return
 
             # install a flow to avoid packet_in next time
-            if out_port != ofproto.OFPP_FLOOD:
+            if len(out_port) == 1:
                 match = parser.OFPMatch(in_port=in_port, eth_dst=dst)
                 self.add_flow(datapath, 1, match, actions)
 
@@ -284,6 +283,9 @@ class SimpleSwitch13(SimpleSwitch13):
     def restore_topology(self):
         """Restore the topology of the network"""
 
+        # Restore mac to port
+        self.mac_to_port = {}
+
         # Restore slice to port - every switch has all ports available
         self.slice_to_port = self.no_slice_configuration
 
@@ -300,6 +302,9 @@ class SimpleSwitch13(SimpleSwitch13):
 
     def update_topology_slice(self):
         """Update the topology of the network, applying the slice restrictions"""
+
+        # Restore mac to port
+        self.mac_to_port = {}
 
         def flatten(l):
             """Flatten a list of lists to a single list"""
