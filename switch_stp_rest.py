@@ -107,13 +107,18 @@ class SimpleSwitch13(SimpleSwitch13):
         self.send_event("wstopology",EventTest(1))
         config = {dpid_lib.str_to_dpid('0000000000000001'):
                   {'bridge': {'priority': 0x8000, 'fwd_delay': 5}},
+                  {'bridge': {'priority': 0x8000, 'fwd_delay': 5}},
                   dpid_lib.str_to_dpid('0000000000000002'):
+                  {'bridge': {'priority': 0x9000, 'fwd_delay': 5}},
                   {'bridge': {'priority': 0x9000, 'fwd_delay': 5}},
                   dpid_lib.str_to_dpid('0000000000000003'):
                   {'bridge': {'priority': 0xa000, 'fwd_delay': 5}},
+                  {'bridge': {'priority': 0xa000, 'fwd_delay': 5}},
                   dpid_lib.str_to_dpid('0000000000000004'):
                   {'bridge': {'priority': 0xb000, 'fwd_delay': 5}},
+                  {'bridge': {'priority': 0xb000, 'fwd_delay': 5}},
                   dpid_lib.str_to_dpid('0000000000000005'):
+                  {'bridge': {'priority': 0xc000, 'fwd_delay': 5}}}
                   {'bridge': {'priority': 0xc000, 'fwd_delay': 5}}}
         """STP configuration"""
 
@@ -206,9 +211,13 @@ class SimpleSwitch13(SimpleSwitch13):
 
                 if dst in self.mac_to_port[dpid] and self.mac_to_port[dpid][dst] in self.slice_to_port[str(dpid)][str(in_port)]:
                     out_port = [self.mac_to_port[dpid][dst]]
+                if dst in self.mac_to_port[dpid] and self.mac_to_port[dpid][dst] in self.slice_to_port[str(dpid)][str(in_port)]:
+                    out_port = [self.mac_to_port[dpid][dst]]
                 else:
                     out_port = self.slice_to_port[str(dpid)][str(in_port)]
+                    out_port = self.slice_to_port[str(dpid)][str(in_port)]
 
+                actions = [parser.OFPActionOutput(int(out)) for out in out_port]
                 actions = [parser.OFPActionOutput(int(out)) for out in out_port]
             else:
                 self.logger.info("Can't communicate due to slice restrictions, switch %s, in_port: %s, slice_to_port %s", dpid, in_port, self.slice_to_port)
@@ -218,6 +227,7 @@ class SimpleSwitch13(SimpleSwitch13):
                 return
 
             # install a flow to avoid packet_in next time
+            if len(out_port) == 1:
             if len(out_port) == 1:
                 match = parser.OFPMatch(in_port=in_port, eth_dst=dst)
                 self.add_flow(datapath, 1, match, actions)
@@ -404,11 +414,13 @@ class SwitchController(ControllerBase):
 
             # Wait for the switch to be configured before applying the qos
             time.sleep(0.3)
+            time.sleep(0.3)
 
             res = requests.post('http://localhost:8080/qos/queue/' + dpid_lib.dpid_to_str(qos_configuration['switch_id']), json.dumps({
                 "port_name": qos_configuration["port_name"],
                 "type": "linux-htb",
                 "max_rate": "10000000000",
+                "queues": [{"max_rate": queue["max_rate"]} for queue in qos_configuration["queues"]]
                 "queues": [{"max_rate": queue["max_rate"]} for queue in qos_configuration["queues"]]
             }))
             print(res.text)
