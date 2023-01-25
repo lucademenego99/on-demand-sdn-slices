@@ -195,7 +195,7 @@ class SimpleSwitch13(SimpleSwitch13):
             if str(in_port) in self.slice_to_port[str(dpid)]:
                 self.mac_to_port[dpid][src] = in_port
 
-                if dst in self.mac_to_port[dpid]:
+                if dst in self.mac_to_port[dpid] and self.mac_to_port[dpid][dst] in self.slice_to_port[str(dpid)][str(in_port)]:
                     out_port = [self.mac_to_port[dpid][dst]]
                 else:
                     out_port = self.slice_to_port[str(dpid)][str(in_port)]
@@ -283,9 +283,6 @@ class SimpleSwitch13(SimpleSwitch13):
     def restore_topology(self):
         """Restore the topology of the network"""
 
-        # Restore mac to port
-        self.mac_to_port = {}
-
         # Restore slice to port - every switch has all ports available
         self.slice_to_port = self.no_slice_configuration
 
@@ -302,9 +299,6 @@ class SimpleSwitch13(SimpleSwitch13):
 
     def update_topology_slice(self):
         """Update the topology of the network, applying the slice restrictions"""
-
-        # Restore mac to port
-        self.mac_to_port = {}
 
         def flatten(l):
             """Flatten a list of lists to a single list"""
