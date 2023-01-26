@@ -104,7 +104,7 @@ elem.update = function () {
         .attr("height", CONF.image.height);
 
         nodeEnter.filter(function(d){console.log("d",d); return  !d.dpid.startsWith("h");}).append("image")
-        .attr("xlink:href", "./router.svg")
+        .attr("xlink:href", "./switch.svg")
         .attr("x", -CONF.image.width/2)
         .attr("y", -CONF.image.height/2)
         .attr("width", CONF.image.width)

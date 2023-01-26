@@ -9,8 +9,8 @@
 <body>
     <!--<div class="header" w3-include-html="header.html"></div> -->
     <div id="mySidenav" class="sidenav">
-      <div>Home</div>
-      <div>New Slice</div>
+      <a class="link" href="homepage.html">Home</a>
+      <a class="link" href="new_slice.html">New Slice</a>
       <hr>
       <p>Default templates</p>
       <a href="javascript:load_slice(1)">Bus</a>
@@ -20,17 +20,15 @@
       <hr>
       <p>Custom templates</p>
     </div>
-        <!-- First Photo Grid-->
-        <div class="w3-row-padding w3-padding-16 w3-center" id="content">
-          <div class="w3-twothird" id="topology_view">
+        <div id="content">
+          <div id="topology_view">
             <div id="network_graph"></div>
           </div>
-          <div  id="details_view" class="w3-third">
+          <div  id="details_view" >
             <div id="details"></div>
           </div>
         </div>
    
-<!-- <h1>Ryu Topology Viewer</h1> -->
 <script>
     function includeHTML() {
       var z, i, elmnt, file, xhttp;

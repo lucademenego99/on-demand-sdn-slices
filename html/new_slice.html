@@ -2,43 +2,56 @@
 <html>
 <head>
 <meta charset="utf-8">
-<link rel="stylesheet" type="text/css" href="./style.css">
+<link rel="stylesheet" type="text/css" href="./new_slice_css.css">
 <link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
 <script src="https://d3js.org/d3.v4.js" charset="utf-8"></script>
 </head>
 <body>
-    <div class="header" w3-include-html="header.html"></div> 
-
-    <script>
-        function includeHTML() {
-          var z, i, elmnt, file, xhttp;
-          /*loop through a collection of all HTML elements:*/
-          z = document.getElementsByTagName("*");
-          for (i = 0; i < z.length; i++) {
-            elmnt = z[i];
-            /*search for elements with a certain attribute:*/
-            file = elmnt.getAttribute("w3-include-html");
-            if (file) {
-              /*make an HTTP request using the attribute value as the file name:*/
-              xhttp = new XMLHttpRequest();
-              xhttp.onreadystatechange = function() {
-                if (this.readyState == 4) {
-                  if (this.status == 200) {elmnt.innerHTML = this.responseText;}
-                  if (this.status == 404) {elmnt.innerHTML = "Page not found.";}
-                  /*remove the attribute, and call this function once more:*/
-                  elmnt.removeAttribute("w3-include-html");
-                  includeHTML();
-                }
-              }      
-              xhttp.open("GET", file, true);
-              xhttp.send();
-              /*exit the function:*/
-              return;
-            }
-          }
-        };
-        includeHTML();
-        </script>
-    <script src="./script.js" charset="utf-8"></script>
+  <div id="mySidenav" class="sidenav">
+    <a href="javascript:void(0)" class="closebtn" onclick="closeNav()">&times;</a>
+    <div id="network_graph"></div>
+  </div>
+  <button onclick="openNav()" id="navOpen">
+    <svg id="search-icon" class="search-icon" viewBox="0 0 24 20">
+      <path fill="#ffffff" d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
+  </svg>
+</button>
+<div id="flowsTable"></div>
+<table border="1" id="newFlowTable">
+  <tr>
+    <td>Source</td>
+    <td>
+      <select id="src">
+      <option value="h1">h1</option>
+      <option value="h2">h2</option>
+      <option value="h3">h3</option>
+      <option value="h4">h4</option>
+      <option value="h5">h5</option>
+    </select>
+  </td>
+  </tr>
+  <tr>
+    <td>Destination</td>
+    <td>
+      <select id="dst">
+        <option value="h1">h1</option>
+      <option value="h2" selected>h2</option>
+      <option value="h3">h3</option>
+      <option value="h4">h4</option>
+      <option value="h5">h5</option>
+    </select>
+  </td>
+  </tr>
+  <tr>
+    <td>max-rate</td>
+    <td><input type="number" id="rate" placeholder="1000" min="1" max="10000000000"></td>
+  </tr>
+  <tr>
+    <td colspan="2">
+      <button onclick="addFlow()" id="addFlow">click</button>
+    </td>
+  </tr>
+</table>
+    <script src="./script_new_slice.js" charset="utf-8"></script>
 </body>
 </html>

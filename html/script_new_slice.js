@@ -1,65 +1,65 @@
 var CONF = {
     image: {
-        width: 50,
-        height: 40
+        width: 25,
+        height: 20
     },
-    margin : {top: 10, right: 30, bottom: 30, left: 40},
-    width : 800,
-    height : 800
+    margin : {top: 10, right: 10, bottom: 10, left: 10},
+    width : 400,
+    height : 400
 };
 var topology_template={
     "hosts":[
         {
             "host_id":"h1",
-            "posx":510,
-            "posy":20
+            "posx":200,
+            "posy":10
         },
         {
             "host_id":"h2",
-            "posx":750,
-            "posy":200
+            "posx":380,
+            "posy":150
         },
         {
             "host_id":"h3",
-            "posx":650,
-            "posy":500
+            "posx":305,
+            "posy":380
         },
         {
             "host_id":"h4",
-            "posx":370,
-            "posy":500
+            "posx":95,
+            "posy":380
         },
         {
             "host_id":"h5",
-            "posx":270,
-            "posy":200
+            "posx":20,
+            "posy":150
         }
     ],
     "switches":[
         {
             "host_id":"s1",
-            "posx":510,
-            "posy":110
+            "posx":200,
+            "posy":80
         },
         {
             "host_id":"s2",
-            "posx":670,
-            "posy":230
+            "posx":320,
+            "posy":170
         },
         {
             "host_id":"s3",
-            "posx":610,
-            "posy":430
+            "posx":275,
+            "posy":325
         },
         {
             "host_id":"s4",
-            "posx":410,
-            "posy":430
+            "posx":125,
+            "posy":325
         },
         {
             "host_id":"s5",
-            "posx":350,
-            "posy":230
+            "posx":80,
+            "posy":170
         }
     ],
     "links":[
@@ -145,6 +145,8 @@ var svg = d3.select("#network_graph")
 .append("svg")
   .attr("width", "100%")
   .attr("height", "100%")
+  .style("width", CONF.width)
+  .style("height", CONF.height)
 .append("g")
   .attr("transform",
         "translate(" + CONF.margin.left + "," + CONF.margin.top + ")");
@@ -340,7 +342,6 @@ function get_topology(topo_id) {
 
 function main() {
     load_topology(topology_template);
-    load_view();
 }
 function load_slice(topo_id){
 
@@ -355,3 +356,112 @@ function load_slice(topo_id){
 
 }
 main();
+/* Set the width of the side navigation to 250px */
+function openNav() {
+    document.getElementById("mySidenav").style.width = "420px";
+    document.getElementById("navOpen").style.opacity="0%"
+  }
+  
+  /* Set the width of the side navigation to 0 */
+  function closeNav() {
+    document.getElementById("mySidenav").style.width = "0";
+    document.getElementById("navOpen").style.opacity="100%"
+  }
+function addNode(container,node_type,id,position=0){
+    // Create the div element
+    var node = document.createElement("div");
+    node.style.width = "50px";
+    node.style.height = "50px";
+    node.classList.add("node");
+
+    // Create the image element
+    var newImg = document.createElement("img");
+    newImg.src = node_type+".svg";
+    newImg.style.width = "50px";
+    newImg.style.height = "50px";
+
+    // Create the text element
+    var newDropDown = document.createElement("select");
+    for(let i=1;i<6;i++){
+        var newOption = document.createElement("option");
+        newOption.value=node_type[0]+i
+        newOption.innerText=node_type[0]+i
+        newDropDown.appendChild(newOption)
+    }
+    newDropDown.selectedIndex=id-1
+    
+    // Append the image and text to the div
+    node.appendChild(newImg);
+    node.appendChild(newDropDown);
+
+    container.insertBefore(node,container.children[position])
+    if(position==0){
+        newDropDown.disabled=true
+    }else{
+        previousSwitch=node.previousSibling
+        previousSelect=previousSwitch.children[1]
+        newDropDown.remove(previousSelect.value[1]-1)
+        lastSwitch=node.nextSibling.nextSibling
+        lastSelect=lastSwitch.children[1]
+        /*Array.from(newDropDown.children).forEach((el)=>{
+            if(el.value==lastSelect.value){
+                newDropDown.remove(el)
+            }
+        })*/
+        newDropDown.removeChild(newDropDown.querySelector('option[value="'+lastSelect.value+'"]'))
+    }
+}
+function addInsert(container){
+    insertBtn=document.createElement("button")
+    insertBtn.onclick=function jsFunc() {
+        Array.from(container.children).forEach((el)=>{ Array.from(el.children).forEach((el2)=>{ el2.disabled=true; console.log(el2)})})
+        addNode(container,"switch",1,container.children.length-5)
+    }
+    insertBtn.classList.add("insertBtn")
+    svg=document.createElement("img")
+    svg.setAttribute("src", "plus_symbol.svg");
+    svg.style.width = "20px";
+    svg.style.height = "20px";
+    insertBtn.appendChild(svg)
+    container.insertBefore(insertBtn,container.children[0])
+}
+function addFlow(){
+
+    src_sel=document.getElementById("src")
+    dst_sel=document.getElementById("dst")
+    max_rate=document.getElementById("rate")
+    if(src.value==dst.value){
+        alert("Source and destination must be different")
+        return;
+    }
+    if(max_rate.value<0 || max_rate>10000000000){
+        alert("max-rate value out of range")
+        return;
+    }
+
+    flowsTable=document.getElementById("flowsTable")
+    flowcontainer=document.createElement("div")
+
+    addNode(flowcontainer,"host",dst_sel.value[1])
+    addNode(flowcontainer,"switch",dst_sel.value[1])
+    addInsert(flowcontainer)
+    addNode(flowcontainer,"switch",src_sel.value[1])
+    addNode(flowcontainer,"host",src_sel.value[1])
+
+    delBtn=document.createElement("button")
+    delBtn.classList.add("delButton")
+    delBtn.onclick=function jsFunc() {
+        document.getElementById("flowsTable").removeChild(flowcontainer)
+    }
+    
+    confirmBtn=document.createElement("button")
+    confirmBtn.classList.add("confirmButton")
+    confirmBtn.onclick=function jsFunc() {
+        console.log("confirmed")
+    }
+
+    flowcontainer.append(delBtn)
+    flowcontainer.append(confirmBtn)
+    flowcontainer.classList.add("flow")
+    flowsTable.append(flowcontainer)
+}
