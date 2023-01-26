@@ -389,6 +389,7 @@ class SwitchController(ControllerBase):
             req: The request object
             sliceid: The slice ID
         """
+        time.sleep(1)
         switch = self.switch_app
         switch.slicing = True
 

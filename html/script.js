@@ -276,7 +276,7 @@ function load_topology(data){
                         config=document.createElement("td")
                         src.innerText=rules[i]["nw_src"]
                         dst.innerText=rules[i]["nw_dst"]
-                        config.innerText=queues[i]["config"]["max-rate"]+" bps"
+                        config.innerText=queues[rules[i]["actions"][0]["queue"]]["config"]["max-rate"]+" bps"
 
                         tr.appendChild(src)
                         tr.appendChild(dst)

@@ -415,21 +415,20 @@ function addInsert(container){
     insertBtn=document.createElement("button")
     insertBtn.onclick=function jsFunc() {
         Array.from(container.children).forEach((el)=>{ Array.from(el.children).forEach((el2)=>{ el2.disabled=true; console.log(el2)})})
-        addNode(container,"switch",1,container.children.length-5)
+        addNode(container,"switch",1,container.children.length-3)
     }
     insertBtn.classList.add("insertBtn")
     svg=document.createElement("img")
     svg.setAttribute("src", "plus_symbol.svg");
-    svg.style.width = "20px";
-    svg.style.height = "20px";
     insertBtn.appendChild(svg)
     container.insertBefore(insertBtn,container.children[0])
 }
+
 function addFlow(){
 
-    src_sel=document.getElementById("src")
-    dst_sel=document.getElementById("dst")
-    max_rate=document.getElementById("rate")
+    let src_sel=document.getElementById("src")
+    let dst_sel=document.getElementById("dst")
+    let max_rate=document.getElementById("rate")
     if(src.value==dst.value){
         alert("Source and destination must be different")
         return;
@@ -438,30 +437,41 @@ function addFlow(){
         alert("max-rate value out of range")
         return;
     }
-
-    flowsTable=document.getElementById("flowsTable")
-    flowcontainer=document.createElement("div")
-
+    let flowsTable=document.getElementById("flowsTable")
+    let flowcontainer=document.createElement("div")
+    let container2=document.createElement("div")
     addNode(flowcontainer,"host",dst_sel.value[1])
     addNode(flowcontainer,"switch",dst_sel.value[1])
     addInsert(flowcontainer)
     addNode(flowcontainer,"switch",src_sel.value[1])
     addNode(flowcontainer,"host",src_sel.value[1])
 
-    delBtn=document.createElement("button")
+    let delBtn=document.createElement("button")
     delBtn.classList.add("delButton")
     delBtn.onclick=function jsFunc() {
-        document.getElementById("flowsTable").removeChild(flowcontainer)
+        document.getElementById("flowsTable").removeChild(container2)
     }
     
-    confirmBtn=document.createElement("button")
+    // Create the image element
+    let delIcon = document.createElement("img");
+    delIcon.src = "trash.svg";
+    delBtn.appendChild(delIcon)
+
+    let confirmBtn=document.createElement("button")
     confirmBtn.classList.add("confirmButton")
     confirmBtn.onclick=function jsFunc() {
         console.log("confirmed")
     }
 
-    flowcontainer.append(delBtn)
-    flowcontainer.append(confirmBtn)
+    let confirmIcon = document.createElement("img");
+    confirmIcon.src = "check.svg";
+    confirmBtn.appendChild(confirmIcon)
+
+    container2.appendChild(flowcontainer)
+    container2.appendChild(delBtn)
+    container2.appendChild(confirmBtn)
     flowcontainer.classList.add("flow")
-    flowsTable.append(flowcontainer)
+    container2.classList.add("c")
+    flowsTable.appendChild(container2)
+    container2.appendChild(document.createElement("hr"))
 }
