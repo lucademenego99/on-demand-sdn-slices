@@ -179,13 +179,15 @@ function update_view(slice){
         line.classList.remove("activeLink")
     }*/
     console.log(slice)
-    for( const switch_id in slice){
+    for(const switch_id in slice){
         console.log(slice[switch_id])
         for(const eth in slice[switch_id]){
             console.log("s"+switch_id+"eth"+eth)
-            line=document.getElementById("s"+switch_id+"eth"+eth)
-            if(line)
-            line.classList.add("activeLink");
+            line=document.getElementsByClassName("s"+switch_id+"eth"+eth)[0]
+            if(line && slice[switch_id][eth].length>0){
+                console.log(slice[switch_id][eth])
+                line.classList.add("activeLink");
+            }
         }
     }
 }  
@@ -215,10 +217,12 @@ function generateID(link){
     let dst_host="s"+(link.dst[1]+1)
     let dst_eth="eth"+(link.src[1]+1)
     if(link.src[0]=="hosts"){
-        src_host="s"+(link.src[1]+1)
-        src_eth="eth5"
+        src_host="h"+(link.src[1]+1)
+        src_eth="eth0"
+        dst_host="s"+(link.dst[1]+1)
+        dst_eth="eth5"
     }
-    return src_host+src_eth
+    return src_host+src_eth+" "+dst_host+dst_eth
 }
 function load_topology(data){
     svg.selectAll("*").remove()
@@ -230,8 +234,9 @@ function load_topology(data){
             .data(data.links)
             .enter()
             .append("line")
-            .attr("id",function(d){return generateID(d)})
-            .attr("class", "link")
+            //.attr("id",function(d){return generateID(d)})
+            //.attr("class", "link")
+            .attr("class",function(d){return "link "+generateID(d)})
             .style("stroke", function(d){return d.active?"#00cc00":"#aaa"})
             .attr("stroke-width", function(d) { return ((d.active+1) * 2.5); })
             .on("click", function(d) { document.getElementById("details").innerText="link "+data[d.src[0]][d.src[1]].host_id +" "+ data[d.dst[0]][d.dst[1]].host_id; })
@@ -337,8 +342,26 @@ function load_topology(data){
 function get_topology(topo_id) {
    // d3.json("/api/v1/get_slice_topology/"+topo_id
 }
-
+function populate_menu(){
+    let separator=document.getElementById("templates_separator")
+    fetch("http://localhost:8080/api/v1/slices")
+    .then((templates) => templates.json())
+    .then((templatesJson) =>{
+        console.log(templatesJson)
+        templatesJson=templatesJson["slices"]
+        for(let i=0;i<templatesJson.length;i++){
+            let temp=document.createElement("a");
+            temp.setAttribute("href","javascript:load_slice("+(i+1)+")")
+            temp.innerText=templatesJson[i]["name"]
+            separator.parentNode.appendChild(temp)
+            if(i<4){
+                separator.parentNode.insertBefore(temp,separator)
+            }
+        }
+    })
+}
 function main() {
+    populate_menu()
     load_topology(topology_template);
     load_view();
 }

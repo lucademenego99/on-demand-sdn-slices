@@ -477,24 +477,28 @@ class SwitchController(ControllerBase):
         except ValueError:
             return Response(status=400, content_type='application/json', text=json.dumps({"status": "error", "message": "Invalid JSON"}))
 
-        slice_configuration = req["slice"]
-        qos_configuration = req["qos"]
 
         # convert all keys of slice_configuration to str
-        slice_configuration = {str(k): v for k, v in slice_configuration.items()}
+        #slice_configuration = {str(k): v for k, v in slice_configuration.items()}
 
         # For each value in slice_configuration, convert all keys to str
-        for k, v in slice_configuration.items():
-            slice_configuration[k] = {str(k2): v2 for k2, v2 in v.items()}
+        #for k, v in slice_configuration.items():
+        #    slice_configuration[k] = {str(k2): v2 for k2, v2 in v.items()}
 
         # Add the slice to the slice_templates
-        switch.slice_templates.append(slice_configuration)
-
+        try:
+            switch.slice_templates.append(req)
+            with open(utils.get_template_path(), "w") as outfile:
+                json.dump(switch.slice_templates, outfile)
+            return Response(content_type='application/json', text=json.dumps({"status": "ok", "slice": switch.slice_templates}))
+            
+        except Exception as e:
+            return Response(content_type='application/json', text=json.dumps({"status": "ko","error":e}))
+    
         # Add the slice to the slice_qos
         #switch.slice_qos.append(qos_configuration)
-
-        return Response(content_type='application/json', text=json.dumps({"status": "ok", "slice": slice_configuration, "qos": qos_configuration}))
-    
+        
+        
     @route('delete-slice', url + "/slice/{sliceid}", methods=['DELETE'], requirements={'sliceid': r'\d+'})
     def delete_slice(self, req, sliceid, **kwargs):
         """Delete a slice template

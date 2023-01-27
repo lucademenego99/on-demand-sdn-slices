@@ -181,21 +181,24 @@ function update_view(slice){
         line.classList.remove("activeLink")
     }*/
     console.log(slice)
-    for( const switch_id in slice){
+    for(const switch_id in slice){
         console.log(slice[switch_id])
         for(const eth in slice[switch_id]){
             console.log("s"+switch_id+"eth"+eth)
-            line=document.getElementById("s"+switch_id+"eth"+eth)
-            if(line)
-            line.classList.add("activeLink");
+            line=document.getElementsByClassName("s"+switch_id+"eth"+eth)[0]
+            if(line && slice[switch_id][eth].length>0){
+                console.log(slice[switch_id][eth])
+                line.classList.add("activeLink");
+            }
         }
     }
 }  
 function load_view(){
     fetch("http://localhost:8080/api/v1/slice_topology")
     .then((response) => response.json())
-    .then((data) => update_view(data));
+    .then((data) => console.log(data));
 }
+/*
 var ws = new WebSocket("ws://" + location.host + "/v1.0/topology/ws");
 ws.onmessage = function(event) {
     console.log("Received message: " + event.data);
@@ -209,7 +212,7 @@ ws.onmessage = function(event) {
     } else {
         this.send(JSON.stringify({"id": data.id, "jsonrpc": "2.0", "error": {"message": "unknown method", "code": 34}}));
     }
-}
+}*/
 function generateID(link){
     
     let src_host="s"+(link.src[1]+1)
@@ -217,10 +220,12 @@ function generateID(link){
     let dst_host="s"+(link.dst[1]+1)
     let dst_eth="eth"+(link.src[1]+1)
     if(link.src[0]=="hosts"){
-        src_host="s"+(link.src[1]+1)
-        src_eth="eth5"
+        src_host="h"+(link.src[1]+1)
+        src_eth="eth0"
+        dst_host="s"+(link.dst[1]+1)
+        dst_eth="eth5"
     }
-    return src_host+src_eth
+    return src_host+src_eth+" "+dst_host+dst_eth
 }
 function load_topology(data){
     svg.selectAll("*").remove()
@@ -232,8 +237,8 @@ function load_topology(data){
             .data(data.links)
             .enter()
             .append("line")
-            .attr("id",function(d){return generateID(d)})
-            .attr("class", "link")
+            .attr("class",function(d){return "link "+generateID(d)})
+            //.attr("class", "link")
             .style("stroke", function(d){return d.active?"#00cc00":"#aaa"})
             .attr("stroke-width", function(d) { return ((d.active+1) * 2.5); })
             .on("click", function(d) { document.getElementById("details").innerText="link "+data[d.src[0]][d.src[1]].host_id +" "+ data[d.dst[0]][d.dst[1]].host_id; })
@@ -356,6 +361,29 @@ function load_slice(topo_id){
 
 }
 main();
+function openNamingBox(){
+    
+    if(document.getElementById("flowsTable").children.length<1){
+        alert("add at least 1 flow")
+        return
+    }
+    if(document.getElementsByClassName("confirmButton").length>0){
+        alert("confirm or delete remaining flows")
+        return
+    }
+    document.getElementById("namingBox").style.zIndex = "3";
+    document.getElementById("discardNameButton").disabled = false;
+    document.getElementById("namingBox").style.width = "360px";
+    document.getElementById("namingBox").style.opacity = "100%";
+
+}
+function closeNamingBox(){
+    
+    document.getElementById("namingBox").style.zIndex = "1";
+    document.getElementById("namingBox").style.width = "0";
+    document.getElementById("namingBox").style.opacity = "0%";
+    document.getElementById("discardNameButton").disabled = true;
+}
 /* Set the width of the side navigation to 250px */
 function openNav() {
     document.getElementById("mySidenav").style.width = "420px";
@@ -415,17 +443,83 @@ function addInsert(container){
     insertBtn=document.createElement("button")
     insertBtn.onclick=function jsFunc() {
         Array.from(container.children).forEach((el)=>{ Array.from(el.children).forEach((el2)=>{ el2.disabled=true; console.log(el2)})})
-        addNode(container,"switch",1,container.children.length-3)
+        addNode(container,"switch",1,container.children.length-4)
     }
     insertBtn.classList.add("insertBtn")
     svg=document.createElement("img")
     svg.setAttribute("src", "plus_symbol.svg");
     insertBtn.appendChild(svg)
     container.insertBefore(insertBtn,container.children[0])
+    return insertBtn;
 }
+let slice={
+    "1":{"1":[],"2":[],"3":[],"4":[],"5":[]},
+    "2":{"1":[],"2":[],"3":[],"4":[],"5":[]},
+    "3":{"1":[],"2":[],"3":[],"4":[],"5":[]},
+    "4":{"1":[],"2":[],"3":[],"4":[],"5":[]},
+    "5":{"1":[],"2":[],"3":[],"4":[],"5":[]}
+}
+let qos=[]
+//direction=0 => in eth
+//direction=1 => out eth
+function getEth(src_switch_id,dst_switch_id){
+    let direction=0
+    let matches={
+        "s1s2":[1,1],
+        "s1s3":[2,1],
+        "s1s4":[3,1],
+        "s1s5":[4,1],
+        "s2s3":[2,2],
+        "s2s4":[3,2],
+        "s2s5":[4,2],
+        "s3s4":[3,3],
+        "s3s5":[4,3],
+        "s4s5":[4,4],
+    }
+    if(src_switch_id[1]>dst_switch_id[1]){
+        let sup=src_switch_id;
+        src_switch_id=dst_switch_id
+        dst_switch_id=sup
+        direction=1
+    }
+    return matches[src_switch_id+dst_switch_id][direction]
+}
+function confirmSlice(){
+    let name=document.getElementById("slice_name").value
+    if(name.length<3 || name.length>15){
+        alert("name must be 3-14 characters long")
+        return
+    }
+    if(confirm("Confirm the slice creation")){
+       
+        let finalSlice={
+            "1":{"1":new Set(),"2":new Set(),"3":new Set(),"4":new Set(),"5":new Set()},
+            "2":{"1":new Set(),"2":new Set(),"3":new Set(),"4":new Set(),"5":new Set()},
+            "3":{"1":new Set(),"2":new Set(),"3":new Set(),"4":new Set(),"5":new Set()},
+            "4":{"1":new Set(),"2":new Set(),"3":new Set(),"4":new Set(),"5":new Set()},
+            "5":{"1":new Set(),"2":new Set(),"3":new Set(),"4":new Set(),"5":new Set()}
+        }
+        for(let i=1;i<6;i++){
+            for(let j=1;j<6;j++){
+                let dest_arr=slice[i.toString()][j.toString()].sort()
+                for(let k=0;k<dest_arr.length;k++){
+                    finalSlice[i.toString()][j.toString()].add(dest_arr[k])
+                }
+                finalSlice[i.toString()][j.toString()]=Array.from(finalSlice[i.toString()][j.toString()])
+            }
+        }
+        console.log(slice)
+        console.log(JSON.stringify({"name":name,"slice":finalSlice,"qos":qos}))
 
+        fetch("http://localhost:8080/api/v1/slice", {
+            method: 'POST', // *GET, POST, PUT, DELETE, etc.
+            body: JSON.stringify({"name":name,"slice":finalSlice,"qos":qos}) // body data type must match "Content-Type" header
+          })
+          .then((res)=>console.log(res.body));
+    }
+
+}
 function addFlow(){
-
     let src_sel=document.getElementById("src")
     let dst_sel=document.getElementById("dst")
     let max_rate=document.getElementById("rate")
@@ -442,7 +536,7 @@ function addFlow(){
     let container2=document.createElement("div")
     addNode(flowcontainer,"host",dst_sel.value[1])
     addNode(flowcontainer,"switch",dst_sel.value[1])
-    addInsert(flowcontainer)
+    let insertBtn=addInsert(flowcontainer)
     addNode(flowcontainer,"switch",src_sel.value[1])
     addNode(flowcontainer,"host",src_sel.value[1])
 
@@ -451,8 +545,6 @@ function addFlow(){
     delBtn.onclick=function jsFunc() {
         document.getElementById("flowsTable").removeChild(container2)
     }
-    
-    // Create the image element
     let delIcon = document.createElement("img");
     delIcon.src = "trash.svg";
     delBtn.appendChild(delIcon)
@@ -461,12 +553,65 @@ function addFlow(){
     confirmBtn.classList.add("confirmButton")
     confirmBtn.onclick=function jsFunc() {
         console.log("confirmed")
-    }
+        flowcontainer.removeChild(insertBtn)
+        let values=(Array.from(flowcontainer.querySelectorAll(".node select"))).map((el)=>{return el.value})
+        for(let i=1;i<values.length-1;i++){
+            let srceth="5"
+            if(values[i-1][0]=="s"){
+                srceth=getEth(values[i],values[i-1])
+            }
 
+            let dsteth="5"
+            if(values[i+1][0]=="s"){
+                dsteth=getEth(values[i],values[i+1])
+            }
+            console.log(values[i]+": eth"+srceth+" => eth"+dsteth)
+            slice[values[i][1]][srceth].push(parseInt(dsteth))
+        }
+
+        update_view(slice)
+        Array.from(flowcontainer.children).forEach((el)=>{ Array.from(el.children).forEach((el2)=>{ el2.disabled=true; console.log(el2)})})
+        let found=-1;
+        for(let i=0;i<qos.length && found==-1;i++){
+            if(qos[i]["switch_id"]==values[values.length-1][1]){
+                found=i;
+            }
+        }
+        let rate=flowcontainer.getElementsByClassName("rate")[0]
+        if(rate.innerText.length>0 && parseInt(rate.innerText)>0 && parseInt(rate.innerText)<10000000000){        
+            
+            if(found==-1){
+                let qos_rule={
+                    "switch_id":parseInt(values[values.length-1][1]),
+                    "port_name":values[values.length-1].replace("h","s")+"-eth5",
+                    "match":[],
+                    "queues":[]
+                }
+                qos.push(qos_rule)
+                found=qos.length-1
+            }
+            qos[found]["match"].push({
+                "nw_dst":"10.0.0."+values[values.length-1][1],
+                "nw_src":"10.0.0."+values[0][1],
+            })
+
+            qos[found]["queues"].push({
+                "queue":(qos[found]["queues"].length).toString(),
+                "max_rate":rate.innerText,
+            })
+        }
+        container2.removeChild(delBtn)
+        container2.removeChild(confirmBtn)
+    }
     let confirmIcon = document.createElement("img");
     confirmIcon.src = "check.svg";
     confirmBtn.appendChild(confirmIcon)
 
+    let rate=document.createElement("div")
+    rate.setAttribute("hidden","hidden")
+    rate.setAttribute("class","rate")
+    rate.innerHTML=document.getElementById("rate").value
+    flowcontainer.appendChild(rate)
     container2.appendChild(flowcontainer)
     container2.appendChild(delBtn)
     container2.appendChild(confirmBtn)
@@ -474,4 +619,5 @@ function addFlow(){
     container2.classList.add("c")
     flowsTable.appendChild(container2)
     container2.appendChild(document.createElement("hr"))
+
 }

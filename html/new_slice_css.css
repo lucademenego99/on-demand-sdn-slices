@@ -3,13 +3,55 @@
     width: 0; /* 0 width - change this with JavaScript */
     position: fixed; /* Stay in place */
     z-index: 1; /* Stay on top */
-    top: 0; /* Stay at the top */
     right: 0;
-    background-color: transparent; 
+    background-color:rgba(255, 255, 255, 0.5);
     overflow-x: hidden; /* Disable horizontal scroll */
+    white-space: nowrap;
     transition: 0.5s; /* 0.5 second transition effect to slide in the sidenav */
   }
-  
+  #mySidenav{
+    bottom: 0; /* Stay at the top */
+    z-index: 4;
+  }
+  #namingBox{
+    bottom: 100px; /* Stay at the top */
+    height: 50px;
+    overflow: hidden;
+    z-index: 1;
+    opacity: 0;
+  }
+  #namingBox input{
+    width: 200px;
+    height: 45px;
+    font-size: 25px;
+  }
+  #confirmNameButton{
+    margin: 0;
+    position: fixed;
+    bottom: 100px;
+    right: 50px;
+    border-radius: 50%;
+    background-color: #0E86D4;
+    border: #0E86D4 2px solid;
+    padding: 10px;
+    transition: 0.2s; /* 0.5 second transition effect to slide in the sidenav */ 
+    z-index: 1;
+  }
+  #discardNameButton:disabled{
+    cursor: default;
+  }
+  #discardNameButton{
+    margin: 0;
+    position: fixed;
+    bottom: 100px;
+    right: 100px;
+    border-radius: 50%;
+    background-color: #FF2E2E;
+    border: #FF2E2E 2px solid;
+    padding: 10px;
+    transition: 0.2s; /* 0.5 second transition effect to slide in the sidenav */ 
+    z-index: 1;
+  }
   /* The navigation menu links */
   .sidenav a {
     padding: 8px 8px 8px 32px;
@@ -25,6 +67,15 @@
     color: #818181;
   }
   
+.activeLink{
+    stroke:#00cc00 !important;
+    stroke-width: 5px;
+  }
+  
+.h1eth0,.h2eth0,.h3eth0,.h4eth0,.h5eth0{
+    stroke:#00cc00 !important;
+    stroke-width: 5px;
+  }
   /* Position and style the close button (top right corner) */
   .sidenav .closebtn {
     position: absolute;
@@ -34,7 +85,7 @@
   }
   #navOpen {
     margin: 0;
-    top:50px;
+    bottom:50px;
     right: 50px;
     position: fixed;
     border-radius: 50%;
@@ -43,7 +94,18 @@
     transition: 0.2s; /* 0.5 second transition effect to slide in the sidenav */ 
     z-index: 2;
   }
-      
+#saveBtn{
+    margin: 0;
+    bottom:100px;
+    right: 50px;
+    position: fixed;
+    border-radius: 50%;
+    background-color: #0E86D4;
+    border: #0E86D4 2px solid;
+    padding: 10px;
+    transition: 0.2s; /* 0.5 second transition effect to slide in the sidenav */ 
+    z-index: 2;
+}   
   #flowsTable{
     width: 100%;
     padding-top: 50px;
@@ -107,7 +169,4 @@
   button:hover{
     opacity: 80%;
     cursor: pointer;
-  }
-  body{
-    height: 2000px;
   }

@@ -106,6 +106,10 @@ body {
   stroke:#00cc00 !important;
   stroke-width: 5px;
 }
+.h1eth0,.h2eth0,.h3eth0,.h4eth0,.h5eth0{
+  stroke:#00cc00 !important;
+  stroke-width: 5px;
+}
 
 .sidenav {
   height: max-content; /* 100% Full-height */

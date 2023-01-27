@@ -14,6 +14,16 @@
   <button onclick="openNav()" id="navOpen">
     <img src="search.svg">
 </button>
+
+<button onclick="openNamingBox()" id="saveBtn">
+  <img src="save.svg">
+</button>
+<div id="namingBox" class="sidenav">
+  <input type="text" id="slice_name" style="display: inline-block;" placeholder="Name">
+  <button onclick="confirmSlice()" id="confirmNameButton"><img src="check.svg">
+  <button onclick="closeNamingBox()" id="discardNameButton" disabled><img src="discard.svg">
+  </button>
+</div>
 <div id="flowsTable"></div>
 <table border="1" id="newFlowTable">
   <tr>
@@ -41,7 +51,7 @@
   </td>
   </tr>
   <tr>
-    <td>max-rate</td>
+    <td>max-rate (bps)</td>
     <td><input type="number" id="rate" placeholder="1000" min="1" max="10000000000"></td>
   </tr>
   <tr>

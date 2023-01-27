@@ -8,7 +8,8 @@ QOS_PATH="resources/slice_qos.json"
 
 TOPO_SLICES_PATH="resources/topologies_templates.json"
 """ Path to the slice topology json file """
-
+def get_template_path():
+    return TEMPLATES_PATH
 def load_slice_templates():
     """ Load the slice templates from the json file """
     return json.load(open(TEMPLATES_PATH))
