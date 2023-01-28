@@ -1,4 +1,4 @@
-from custom_events import EventTest
+from custom_events import EventTest, SliceUpdateEvent
 
 class EventsHandler(object):
     """
@@ -20,6 +20,11 @@ class EventsHandler(object):
         """
         print("sending event")
         print(type(arg))
-        self.send_event(self.to, arg)
+        self.send_event(self.to, EventTest(arg))
     
-    # TODO: Add more events here
+    def send_slice_update(self, arg):
+        """
+        Send a slice update event to the GUI
+        :param arg: event argument
+        """
+        self.send_event(self.to, SliceUpdateEvent(arg))
