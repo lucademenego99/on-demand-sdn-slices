@@ -77,9 +77,6 @@ class SimpleSwitch13(SimpleSwitch13):
         self.slice_templates=utils.load_slice_templates()
         """List of slice templates"""
 
-        #self.slice_qos=utils.load_slice_qos()
-        """List of slice QoS rules"""
-
         self.stp = kwargs['stplib']
         """Spanning Tree Protocol instance"""
 
@@ -474,7 +471,6 @@ class SwitchController(ControllerBase):
 
         return Response(content_type='application/json', text=json.dumps({"status": "ok"}))
     
-    #TODO: modify to conform to the json file
     @route('create-slice', url + "/slice", methods=['POST'])
     def create_slice(self, req, **kwargs):
         """Create a new slice template
@@ -489,14 +485,6 @@ class SwitchController(ControllerBase):
         except ValueError:
             return Response(status=400, content_type='application/json', text=json.dumps({"status": "error", "message": "Invalid JSON"}))
 
-
-        # convert all keys of slice_configuration to str
-        #slice_configuration = {str(k): v for k, v in slice_configuration.items()}
-
-        # For each value in slice_configuration, convert all keys to str
-        #for k, v in slice_configuration.items():
-        #    slice_configuration[k] = {str(k2): v2 for k2, v2 in v.items()}
-
         # Add the slice to the slice_templates
         try:
             switch.slice_templates.append(req)
@@ -506,9 +494,6 @@ class SwitchController(ControllerBase):
             
         except Exception as e:
             return Response(content_type='application/json', text=json.dumps({"status": "ko","error":e}))
-    
-        # Add the slice to the slice_qos
-        #switch.slice_qos.append(qos_configuration)
         
         
     @route('delete-slice', url + "/slice/{sliceid}", methods=['DELETE'], requirements={'sliceid': r'\d+'})
