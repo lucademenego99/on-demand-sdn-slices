@@ -304,7 +304,7 @@ function load_topology(data){
          })
         ;
         switches.append("image")
-            .attr("xlink:href", "./switch.svg")
+            .attr("xlink:href", "./res/switch.svg")
             .attr("width", CONF.image.width)
             .attr("height", CONF.image.height);
         switches.append("text")
@@ -325,7 +325,7 @@ function load_topology(data){
         .attr("class", "host");
 
         hosts.append("image")
-            .attr("xlink:href", "./host.svg")
+            .attr("xlink:href", "./res/host.svg")
             .attr("width", CONF.image.width)
             .attr("height", CONF.image.height);
         hosts.append("text")
@@ -404,7 +404,7 @@ function addNode(container,node_type,id,position=0){
 
     // Create the image element
     var newImg = document.createElement("img");
-    newImg.src = node_type+".svg";
+    newImg.src = "res/"+node_type+".svg";
     newImg.style.width = "50px";
     newImg.style.height = "50px";
 
@@ -447,7 +447,7 @@ function addInsert(container){
     }
     insertBtn.classList.add("insertBtn")
     svg=document.createElement("img")
-    svg.setAttribute("src", "plus_symbol.svg");
+    svg.setAttribute("src", "res/plus_symbol.svg");
     insertBtn.appendChild(svg)
     container.insertBefore(insertBtn,container.children[0])
     return insertBtn;
@@ -546,7 +546,7 @@ function addFlow(){
         document.getElementById("flowsTable").removeChild(container2)
     }
     let delIcon = document.createElement("img");
-    delIcon.src = "trash.svg";
+    delIcon.src = "res/trash.svg";
     delBtn.appendChild(delIcon)
 
     let confirmBtn=document.createElement("button")
@@ -604,7 +604,7 @@ function addFlow(){
         container2.removeChild(confirmBtn)
     }
     let confirmIcon = document.createElement("img");
-    confirmIcon.src = "check.svg";
+    confirmIcon.src = "res/check.svg";
     confirmBtn.appendChild(confirmIcon)
 
     let rate=document.createElement("div")

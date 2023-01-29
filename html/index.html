@@ -2,11 +2,27 @@
 <html>
 <head>
 <meta charset="utf-8">
-<link rel="stylesheet" type="text/css" href="./ryu.topology.css">
-<script src="http://d3js.org/d3.v3.min.js" charset="utf-8"></script>
+<link rel="stylesheet" type="text/css" href="./index_style.css">
+<link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
+<script src="https://d3js.org/d3.v4.js" charset="utf-8"></script>
 </head>
 <body>
-<!-- <h1>Ryu Topology Viewer</h1> -->
-<script src="./ryu.topology.js" charset="utf-8"></script>
+    <div id="mySidenav" class="sidenav">
+      <a class="link" href="index.html">Home</a>
+      <a class="link" href="new_slice.html">New Slice</a>
+      <hr>
+      <p>Default templates</p>
+      <hr id="templates_separator">
+      <p>Custom templates</p>
+    </div>
+        <div id="content">
+          <div id="topology_view">
+            <div id="network_graph"></div>
+          </div>
+          <div  id="details_view" >
+            <div id="details"></div>
+          </div>
+        </div>
+<script src="./index_script.js" charset="utf-8"></script>
 </body>
 </html>

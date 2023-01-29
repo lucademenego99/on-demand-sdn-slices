@@ -302,7 +302,7 @@ function load_topology(data){
          })
         ;
         switches.append("image")
-            .attr("xlink:href", "./switch.svg")
+            .attr("xlink:href", "./res/switch.svg")
             .attr("width", CONF.image.width)
             .attr("height", CONF.image.height);
         switches.append("text")
@@ -323,7 +323,7 @@ function load_topology(data){
         .attr("class", "host");
 
         hosts.append("image")
-            .attr("xlink:href", "./host.svg")
+            .attr("xlink:href", "./res/host.svg")
             .attr("width", CONF.image.width)
             .attr("height", CONF.image.height);
         hosts.append("text")

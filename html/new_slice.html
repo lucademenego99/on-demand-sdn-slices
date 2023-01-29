@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta charset="utf-8">
-<link rel="stylesheet" type="text/css" href="./new_slice_css.css">
+<link rel="stylesheet" type="text/css" href="./new_slice_style.css">
 <link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
 <script src="https://d3js.org/d3.v4.js" charset="utf-8"></script>
 </head>
@@ -12,16 +12,16 @@
     <div id="network_graph"></div>
   </div>
   <button onclick="openNav()" id="navOpen">
-    <img src="search.svg">
+    <img src="res/search.svg">
 </button>
 
 <button onclick="openNamingBox()" id="saveBtn">
-  <img src="save.svg">
+  <img src="res/save.svg">
 </button>
 <div id="namingBox" class="sidenav">
   <input type="text" id="slice_name" style="display: inline-block;" placeholder="Name">
-  <button onclick="confirmSlice()" id="confirmNameButton"><img src="check.svg">
-  <button onclick="closeNamingBox()" id="discardNameButton" disabled><img src="discard.svg">
+  <button onclick="confirmSlice()" id="confirmNameButton"><img src="res/check.svg">
+  <button onclick="closeNamingBox()" id="discardNameButton" disabled><img src="res/discard.svg">
   </button>
 </div>
 <div id="flowsTable"></div>
@@ -60,6 +60,6 @@
     </td>
   </tr>
 </table>
-    <script src="./script_new_slice.js" charset="utf-8"></script>
+    <script src="./new_slice_script.js" charset="utf-8"></script>
 </body>
 </html>

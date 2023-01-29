@@ -73,6 +73,10 @@ class GUIServerController(ControllerBase):
     def docs_handler(self, req, **kwargs):
         return self.static_app(req)
 
+    @route('res', '/res/*filename')
+    def res_handler(self, req, **kwargs):
+            return self.static_app(req)
+            
     @route('topology', '/{filename:[^/]*}')
     def static_handler(self, req, **kwargs):
         if kwargs['filename']:
@@ -81,8 +85,8 @@ class GUIServerController(ControllerBase):
 
 # Require the following Ryu applications to be loaded
 # (see README.md for more information)
-app_manager.require_app('/home/vagrant/comnetsemu/app/realizing_network_slicing/on-demand-sdn-slices/ws_topology.py')
-app_manager.require_app('/home/vagrant/comnetsemu/app/realizing_network_slicing/on-demand-sdn-slices/switch_stp_rest.py')
+app_manager.require_app('/home/comnetsemu/on-demand-sdn-slices/ws_topology.py')
+app_manager.require_app('/home/comnetsemu/on-demand-sdn-slices/switch_stp_rest.py')
 app_manager.require_app('ryu.app.rest_qos')
 app_manager.require_app('ryu.app.rest_topology')
 app_manager.require_app('ryu.app.ofctl_rest')
