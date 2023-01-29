@@ -14,7 +14,7 @@
     z-index: 4;
   }
   #namingBox{
-    bottom: 100px; /* Stay at the top */
+    bottom: 150px; /* Stay at the top */
     height: 50px;
     overflow: hidden;
     z-index: 1;
@@ -28,7 +28,7 @@
   #confirmNameButton{
     margin: 0;
     position: fixed;
-    bottom: 100px;
+    bottom: 150px;
     right: 50px;
     border-radius: 50%;
     background-color: #0E86D4;
@@ -43,7 +43,7 @@
   #discardNameButton{
     margin: 0;
     position: fixed;
-    bottom: 100px;
+    bottom: 150px;
     right: 100px;
     border-radius: 50%;
     background-color: #FF2E2E;
@@ -85,7 +85,7 @@
   }
   #navOpen {
     margin: 0;
-    bottom:50px;
+    bottom:100px;
     right: 50px;
     position: fixed;
     border-radius: 50%;
@@ -96,7 +96,7 @@
   }
 #saveBtn{
     margin: 0;
-    bottom:100px;
+    bottom:150px;
     right: 50px;
     position: fixed;
     border-radius: 50%;
@@ -105,6 +105,18 @@
     padding: 10px;
     transition: 0.2s; /* 0.5 second transition effect to slide in the sidenav */ 
     z-index: 2;
+}   
+#homeBtn{
+  margin: 0;
+  bottom:50px;
+  right: 50px;
+  position: fixed;
+  border-radius: 50%;
+  background-color: #111;
+  border: #111 2px solid;
+  padding: 10px;
+  transition: 0.2s; /* 0.5 second transition effect to slide in the sidenav */ 
+  z-index: 2;
 }   
   #flowsTable{
     width: 100%;
@@ -128,6 +140,8 @@
   }
   #newFlowTable{
     margin: auto;
+    background-color: #eeeeee;
+    border-radius: 10px;
   }
   #newFlowTable td{
     text-align: center;

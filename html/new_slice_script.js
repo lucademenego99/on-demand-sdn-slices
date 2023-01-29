@@ -372,9 +372,10 @@ function openNamingBox(){
         return
     }
     document.getElementById("namingBox").style.zIndex = "3";
-    document.getElementById("discardNameButton").disabled = false;
+    document.getElementById("discardNameButton").style.visibility = "visible";
     document.getElementById("namingBox").style.width = "360px";
     document.getElementById("namingBox").style.opacity = "100%";
+    document.getElementById("saveBtn").style.visibility = "hidden";
 
 }
 function closeNamingBox(){
@@ -382,7 +383,8 @@ function closeNamingBox(){
     document.getElementById("namingBox").style.zIndex = "1";
     document.getElementById("namingBox").style.width = "0";
     document.getElementById("namingBox").style.opacity = "0%";
-    document.getElementById("discardNameButton").disabled = true;
+    document.getElementById("discardNameButton").style.visibility = "hidden";
+    document.getElementById("saveBtn").style.visibility = "visible";
 }
 /* Set the width of the side navigation to 250px */
 function openNav() {

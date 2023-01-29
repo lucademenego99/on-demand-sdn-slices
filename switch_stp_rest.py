@@ -97,15 +97,15 @@ class SimpleSwitch13(SimpleSwitch13):
 
         self.events_handler = EventsHandler(self.send_event, "wstopology")
         config = {dpid_lib.str_to_dpid('0000000000000001'):
-                  {'bridge': {'priority': 0x8000, 'fwd_delay': 5}},
+                  {'bridge': {'priority': 0x8000, 'fwd_delay': 8}},
                   dpid_lib.str_to_dpid('0000000000000002'):
-                  {'bridge': {'priority': 0x9000, 'fwd_delay': 5}},
+                  {'bridge': {'priority': 0x9000, 'fwd_delay': 8}},
                   dpid_lib.str_to_dpid('0000000000000003'):
-                  {'bridge': {'priority': 0xa000, 'fwd_delay': 5}},
+                  {'bridge': {'priority': 0xa000, 'fwd_delay': 8}},
                   dpid_lib.str_to_dpid('0000000000000004'):
-                  {'bridge': {'priority': 0xb000, 'fwd_delay': 5}},
+                  {'bridge': {'priority': 0xb000, 'fwd_delay': 8}},
                   dpid_lib.str_to_dpid('0000000000000005'):
-                  {'bridge': {'priority': 0xc000, 'fwd_delay': 5}}}
+                  {'bridge': {'priority': 0xc000, 'fwd_delay': 8}}}
         """STP configuration"""
 
         # Register the STP configuration
@@ -505,12 +505,15 @@ class SwitchController(ControllerBase):
             sliceid: The slice ID
         """
         switch = self.switch_app
-
+        print(req)
         # Check if the slice is valid
-        if len(switch.slice_templates) < int(sliceid):
+        if len(switch.slice_templates) < int(sliceid) or int(sliceid)<5:
             return Response(status=404)
 
         # Delete the slice from the slice_templates
         del switch.slice_templates[int(sliceid)-1]
+
+        with open(utils.get_template_path(), "w") as outfile:
+            json.dump(switch.slice_templates, outfile)
 
         return Response(content_type='application/json', text=json.dumps({"status": "ok", "slices": switch.slice_templates}))

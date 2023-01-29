@@ -18,14 +18,18 @@
 <button onclick="openNamingBox()" id="saveBtn">
   <img src="res/save.svg">
 </button>
+
+<button onclick="location.href='http:\/\/localhost:8080\/'" id="homeBtn">
+  <img src="res/home.svg">
+</button>
 <div id="namingBox" class="sidenav">
   <input type="text" id="slice_name" style="display: inline-block;" placeholder="Name">
   <button onclick="confirmSlice()" id="confirmNameButton"><img src="res/check.svg">
-  <button onclick="closeNamingBox()" id="discardNameButton" disabled><img src="res/discard.svg">
+  <button onclick="closeNamingBox()" id="discardNameButton"><img src="res/discard.svg">
   </button>
 </div>
 <div id="flowsTable"></div>
-<table border="1" id="newFlowTable">
+<table id="newFlowTable">
   <tr>
     <td>Source</td>
     <td>
@@ -56,7 +60,7 @@
   </tr>
   <tr>
     <td colspan="2">
-      <button onclick="addFlow()" id="addFlow">click</button>
+      <button onclick="addFlow()" id="addFlow">Add flow</button>
     </td>
   </tr>
 </table>

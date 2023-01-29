@@ -110,7 +110,22 @@ body {
   stroke:#00cc00 !important;
   stroke-width: 5px;
 }
-
+.deleteSliceBtn{
+  border-radius: 50%;
+  width: 38.5px;
+  height: 38.5px;
+}
+.deleteSliceBtn img {
+  position:absolute;
+  top: 50%;
+  left:50%;
+  -webkit-transform: translate(-50%, -50%);
+  -ms-transform: translate(-50%, -50%);
+  transform: translate(-50%, -50%);
+}
+.deleteSliceBtn:hover{
+  cursor: pointer;
+}
 .sidenav {
   height: max-content; /* 100% Full-height */
   width: 180px; /* 0 width - change this with JavaScript */
@@ -147,6 +162,20 @@ body {
   display: block;
 }
 .sidenav a:hover{
-  
   background-color: #111;
+}
+#loadingLayer{
+  position: fixed;
+  width: 100%;
+  height: 100%;
+  z-index: 10;
+  background-color: rgba(255, 255, 255, 0.7);;
+  text-align: center;
+}
+#loadingLayer div{
+  position: relative;
+  top: 50%;
+  width: 100%;
+  height: 100%;
+  text-align: center;
 }

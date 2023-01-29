@@ -190,6 +190,7 @@ function update_view(slice){
             }
         }
     }
+    document.getElementById("loadingLayer").style.visibility = "hidden";
 }  
 function load_view(){
     fetch("http://localhost:8080/api/v1/slice_topology")
@@ -342,20 +343,60 @@ function load_topology(data){
 function get_topology(topo_id) {
    // d3.json("/api/v1/get_slice_topology/"+topo_id
 }
+function delete_template(id){
+    console.log("called")
+    fetch("http://localhost:8080/api/v1/slice/"+id, {
+        method: 'delete',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({sliceid: 5})
+      }).then((res)=>res.json()).then((r)=>{
+        if(r["status"]=="ok"){
+           populate_menu()
+        }
+      })
+}
 function populate_menu(){
     let separator=document.getElementById("templates_separator")
+    let spans=document.querySelectorAll(".template")
+    console.log(spans)
+    spans.forEach(span =>span.remove())
     fetch("http://localhost:8080/api/v1/slices")
     .then((templates) => templates.json())
     .then((templatesJson) =>{
         console.log(templatesJson)
         templatesJson=templatesJson["slices"]
         for(let i=0;i<templatesJson.length;i++){
+            let temp_container=document.createElement("span")
+            temp_container.classList.add("template")
+            temp_container.style.position="relative"
             let temp=document.createElement("a");
             temp.setAttribute("href","javascript:load_slice("+(i+1)+")")
             temp.innerText=templatesJson[i]["name"]
-            separator.parentNode.appendChild(temp)
+            
+            temp_container.appendChild(temp)
+            separator.parentNode.appendChild(temp_container)
             if(i<4){
-                separator.parentNode.insertBefore(temp,separator)
+                separator.parentNode.insertBefore(temp_container,separator)
+            }else{
+                let delete_temp=document.createElement("button")
+                delete_temp.classList.add("deleteSliceBtn")
+                delete_temp.style.position="absolute"
+                delete_temp.style.top="0"
+                delete_temp.style.right="0"
+                delete_temp.style.padding="5px"
+                delete_temp.style.backgroundColor="transparent"
+                delete_temp.style.border="0"
+                delete_temp.onclick=function f(){if(confirm("Permanently delete slice '"+temp_container.innerText+"'?"))delete_template((i+1))}
+                let svg=document.createElement("img")
+                svg.setAttribute("src", "res/trash_red.svg");
+                svg.style.width="20px"
+                svg.style.height="20px"
+                svg.style.cursor="pointer"
+                delete_temp.addEventListener("mouseover",function(){delete_temp.style.backgroundColor="#eee";temp.style.backgroundColor="#bbb" })
+                delete_temp.addEventListener("mouseout",function(){delete_temp.style.backgroundColor="transparent";temp.style.removeProperty("background-color")  })
+                delete_temp.appendChild(svg)
+
+                temp_container.appendChild(delete_temp)
             }
         }
     })
@@ -368,7 +409,9 @@ function main() {
 function load_slice(topo_id){
 
     if(topo_id>0){
-        fetch("http://localhost:8080/api/v1/slice/"+topo_id)
+        document.getElementById("details").innerHTML=""
+        document.getElementById("loadingLayer").style.visibility = "visible";
+        fetch("http://localhost:8080/api/v1/slice/"+topo_id).then(console.log("loaded"))
     }
     else{
         fetch("http://localhost:8080/api/v1/slice/deactivate")
