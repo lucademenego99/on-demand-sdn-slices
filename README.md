@@ -24,7 +24,11 @@ From now on, you can:
 - use the exposed REST API to manage the network (all routes are documented in the next sections)
 - use the exposed web application by opening - using a browser - `http://localhost:8080`.
 
-The web application allows you to...
+The web application allows you to:
+- visualize the topology and the currently applied slice;
+- apply a slice;
+- create a new slice with QoS rules;
+- delete a slice.
 
 
 ## Ryu application components
@@ -70,11 +74,3 @@ Deactivate a slice:
 ```
 curl -X GET http://127.0.0.1:8080/api/v1/slice/deactivate
 ```
-
-
-# Todos
-
-- instead of redefining ws_topology, stplib and hub, can we just extend them with the few new features we need?
-- make switch_stp_rest's `__init__` independent from the architecture
-  - we need to decide how the priority of each switch should be defined: is it possible to choose it based on the links' bandwidth? Do we have this information at startup?
-

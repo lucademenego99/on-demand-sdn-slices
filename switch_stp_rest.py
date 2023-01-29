@@ -1,18 +1,3 @@
-# Copyright (C) 2016 Nippon Telegraph and Telephone Corporation.
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#    http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
-# implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-
 import json
 import requests
 import time
@@ -35,9 +20,11 @@ switch_instance_name = 'switch_api_app'
 """Switch application name, used to link the REST API controller to the switch"""
 
 _PORTNO_LEN = 8
+"""Port Number length"""
 
 url = '/api/v1'
 """Base URL for the REST API"""
+
 class SimpleSwitch13(SimpleSwitch13):
     """Base Switch class, called via ryu-manager"""
 
@@ -55,7 +42,6 @@ class SimpleSwitch13(SimpleSwitch13):
         super(SimpleSwitch13, self).__init__(*args, **kwargs)
         self.name = switch_instance_name
 
-        # TODO can it be replaced with the topology ryu app?
         self.dpset = kwargs['dpset']
         """Manage switches"""
 
@@ -96,6 +82,8 @@ class SimpleSwitch13(SimpleSwitch13):
         """Current slice configuration"""
 
         self.events_handler = EventsHandler(self.send_event, "wstopology")
+        """Events handler instance, used to send events to the WSTopology application"""
+
         config = {dpid_lib.str_to_dpid('0000000000000001'):
                   {'bridge': {'priority': 0x8000, 'fwd_delay': 8}},
                   dpid_lib.str_to_dpid('0000000000000002'):
@@ -110,16 +98,13 @@ class SimpleSwitch13(SimpleSwitch13):
 
         # Register the STP configuration
         self.stp.set_config(config)
+        
         wsgi = kwargs['wsgi']
         """WSGI application instance"""
 
         # Register the REST API
         wsgi.register(SwitchController, {switch_instance_name: self})
     
-    
-
-    def get_slice_topology(self,id):
-        return utils.load_topo_slice()[id]
     def add_flow(self, datapath, priority, match, actions, buffer_id=None):
         """Add a flow to the switch
 
@@ -165,7 +150,7 @@ class SimpleSwitch13(SimpleSwitch13):
 
     @set_ev_cls(stplib.EventPacketIn, MAIN_DISPATCHER)
     def _packet_in_handler(self, ev):
-        """Handle packet in messages from the switch, learning the MAC address of the source and adding a flow if possible.
+        """Handle packet in messages from the switch, learning the MAC address of the source.
         Eventually the packet is forwarded to the destination, or flooded.
 
         Args:
@@ -191,27 +176,27 @@ class SimpleSwitch13(SimpleSwitch13):
             dpid = datapath.id
             self.mac_to_port.setdefault(dpid, {})
 
+            # Check if the slice allows this communication
             if str(in_port) in self.slice_to_port[str(dpid)]:
+                # Learn a mac address to avoid FLOOD next time.
                 self.mac_to_port[dpid][src] = in_port
 
+                # If the destination is known, send the packet to the destination
                 if dst in self.mac_to_port[dpid] and self.mac_to_port[dpid][dst] in self.slice_to_port[str(dpid)][str(in_port)]:
                     out_port = [self.mac_to_port[dpid][dst]]
                 else:
+                    # Flood the packet to all possible ports (based on the slice restrictions)
                     out_port = self.slice_to_port[str(dpid)][str(in_port)]
 
+                # Create the actions list: send the packet to each port in out_port
                 actions = [parser.OFPActionOutput(int(out)) for out in out_port]
             else:
+                # The slice doesn't allow this communication, no action is taken
                 self.logger.info("Can't communicate due to slice restrictions, switch %s, in_port: %s, slice_to_port %s", dpid, in_port, self.slice_to_port)
                 out = parser.OFPPacketOut(datapath=datapath, buffer_id=msg.buffer_id,
                                     in_port=in_port, actions=[], data=None)
                 datapath.send_msg(out)
                 return
-
-            # install a flow to avoid packet_in next time
-            # TODO if used, we probably need to delete all of them when applying a slice
-            # if len(out_port) == 1:
-            #     match = parser.OFPMatch(in_port=in_port, eth_dst=dst)
-            #     self.add_flow(datapath, 1, match, actions)
 
             data = None
             if msg.buffer_id == ofproto.OFP_NO_BUFFER:
@@ -274,8 +259,9 @@ class SimpleSwitch13(SimpleSwitch13):
             self.links = requests.get('http://localhost:8080/v1.0/topology/links').json()
         return self.links
     
-    # TODO move it to a separate specially-crafted class
     def str_to_port_no(self, port_no_str):
+        """Convert a port number from string to int"""
+
         assert len(port_no_str) == _PORTNO_LEN
         return int(port_no_str, 8)
     
@@ -285,6 +271,7 @@ class SimpleSwitch13(SimpleSwitch13):
         # Restore slice to port - every switch has all ports available
         self.slice_to_port = self.no_slice_configuration
 
+        # Bring up all links
         for switch in self.get_switches():
             switch_id = dpid_lib.str_to_dpid(switch["dpid"])
             bridge = self.stp.bridge_list[switch_id]
@@ -377,6 +364,9 @@ class SwitchController(ControllerBase):
         # Check if the slice is valid
         if len(switch.slice_templates) < int(sliceid):
             return Response(status=404)
+        
+        # Set switch to slicing mode
+        switch.slicing = True
 
         # If a slice is already applied, delete queues and qos rules
         if switch.current_slice_index is not None:
@@ -392,8 +382,6 @@ class SwitchController(ControllerBase):
                 print("Finished deleting queue %s" % dpid_lib.dpid_to_str(qos_configuration['switch_id']))
             
             time.sleep(1)
-
-        switch.slicing = True
 
         # Set qos based on the new slice
         for qos_configuration in switch.slice_templates[int(sliceid)-1]["qos"]:
@@ -411,7 +399,9 @@ class SwitchController(ControllerBase):
                 "queues": [{"max_rate": queue["max_rate"]} for queue in qos_configuration["queues"]]
             }))
             print(res.text)
+
             time.sleep(0.1)
+
             for index, match in enumerate(qos_configuration["match"]):
                 res = requests.post('http://localhost:8080/qos/rules/' + dpid_lib.dpid_to_str(qos_configuration['switch_id']), json.dumps({
                     "match": {
@@ -432,6 +422,8 @@ class SwitchController(ControllerBase):
         
         # Update the topology based on the updated slice
         switch.update_topology_slice()
+
+        # Slice completed
         switch.slicing = False
 
         switch.events_handler.send_slice_update(switch.slice_to_port)
@@ -505,7 +497,6 @@ class SwitchController(ControllerBase):
             sliceid: The slice ID
         """
         switch = self.switch_app
-        print(req)
         # Check if the slice is valid
         if len(switch.slice_templates) < int(sliceid) or int(sliceid)<5:
             return Response(status=404)
@@ -513,6 +504,7 @@ class SwitchController(ControllerBase):
         # Delete the slice from the slice_templates
         del switch.slice_templates[int(sliceid)-1]
 
+        # Update the template file
         with open(utils.get_template_path(), "w") as outfile:
             json.dump(switch.slice_templates, outfile)
 

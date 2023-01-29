@@ -1,18 +1,3 @@
-# Copyright (C) 2014 Nippon Telegraph and Telephone Corporation.
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#    http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
-# implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-
 """
 Main application for the Ryu SDN controller.
 
@@ -40,8 +25,6 @@ Ryu applications:
 - ryu.app.ofctl_rest
 """
 
-import os
-
 from webob.static import DirectoryApp
 
 from ryu.app.wsgi import ControllerBase, WSGIApplication, route
@@ -50,11 +33,15 @@ from ryu.base import app_manager
 
 # Serving static files
 class GUIServerApp(app_manager.RyuApp):
+    """Ryu application for serving static files"""
+
     _CONTEXTS = {
         'wsgi': WSGIApplication,
     }
+    """Contexts required by the Ryu application"""
 
     def __init__(self, *args, **kwargs):
+        """Constructor"""
         super(GUIServerApp, self).__init__(*args, **kwargs)
 
         wsgi = kwargs['wsgi']
@@ -62,6 +49,7 @@ class GUIServerApp(app_manager.RyuApp):
 
 
 class GUIServerController(ControllerBase):
+    """Controller for serving static files"""
     def __init__(self, req, link, data, **config):
         super(GUIServerController, self).__init__(req, link, data, **config)
 
@@ -71,19 +59,23 @@ class GUIServerController(ControllerBase):
     
     @route('docs', '/docs/*filename')
     def docs_handler(self, req, **kwargs):
+        """Handler for the /docs/*filename route, providing the documentation"""
         return self.static_app(req)
 
     @route('res', '/res/*filename')
     def res_handler(self, req, **kwargs):
-            return self.static_app(req)
+        """Handler for the /res/*filename route, providing the resources"""
+        return self.static_app(req)
             
     @route('topology', '/{filename:[^/]*}')
     def static_handler(self, req, **kwargs):
+        """Handler for the /{filename} route, providing the main static files"""
         if kwargs['filename']:
             req.path_info = kwargs['filename']
         return self.static_app(req)
 
 # Require the following Ryu applications to be loaded
+# NOTE: The path to the applications must be absolute
 # (see README.md for more information)
 app_manager.require_app('/home/vagrant/comnetsemu/app/realizing_network_slicing/on-demand-sdn-slices/ws_topology.py')
 app_manager.require_app('/home/vagrant/comnetsemu/app/realizing_network_slicing/on-demand-sdn-slices/switch_stp_rest.py')
