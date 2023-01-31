@@ -42,12 +42,19 @@ From now on, you can:
 - use the exposed REST API to manage the network (all routes are documented in the next sections)
 - use the exposed web application by opening - using a browser - `http://localhost:8080`.
 
-The web application allows you to:
-- visualize the topology and the currently applied slice;
-- apply a slice;
-- create a new slice with QoS rules;
-- delete a slice.
+## Web application functionalities
+The web application consists of two pages namely, the *Homepage* and the *New slice* page. 
+On the *Homepage*, the user is able to perform the following tasks:
+- View the network topology and the configurations of the various switches in case slices have been applied.
+- Apply predefined slices, which simulate common network topologies such as *Bus*, *Tree* and *Star*.
+- Apply custom slices, which can be created in the New slice page.
+- Deactivate applied slices, allowing the network to revert back to a mesh network configuration.
 
+When the user navigates to the *New slice* he has the following capabilities:
+- Create new flow by specifying source and destination hosts.
+- Preview the created flow.
+- Name the custom slice to make it easier to identify and locate later.
+- Save custom slices for future use.
 
 ## Ryu application components
 
