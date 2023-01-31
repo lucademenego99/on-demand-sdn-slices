@@ -15,3 +15,11 @@ class SliceUpdateEvent(event.EventBase):
     def __init__(self, slice_template):
         super(SliceUpdateEvent, self).__init__()
         self.slice_template=slice_template
+
+class SliceListUpdateEvent(event.EventBase):
+    """
+    This event is used to test notify a slice update
+    """
+    def __init__(self, slice_list):
+        super(SliceListUpdateEvent, self).__init__()
+        self.slice_list=slice_list
