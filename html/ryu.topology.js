@@ -97,14 +97,14 @@ elem.update = function () {
         .on("dblclick", function(d) { d3.select(this).classed("fixed", d.fixed = false); })
         .call(this.drag);
         nodeEnter.filter(function(d){console.log("d",d); return d.dpid.startsWith("h");}).append("image")
-        .attr("xlink:href", "./host.svg")
+        .attr("xlink:href", "./res/host.svg")
         .attr("x", -CONF.image.width/2)
         .attr("y", -CONF.image.height/2)
         .attr("width", CONF.image.width)
         .attr("height", CONF.image.height);
 
         nodeEnter.filter(function(d){console.log("d",d); return  !d.dpid.startsWith("h");}).append("image")
-        .attr("xlink:href", "./router.svg")
+        .attr("xlink:href", "./res/switch.svg")
         .attr("x", -CONF.image.width/2)
         .attr("y", -CONF.image.height/2)
         .attr("width", CONF.image.width)
@@ -281,7 +281,7 @@ var rpc = {
 }
 
 function initialize_topology() {
-    d3.json("/v1.0/topology/switches", function(error, switches) {
+    d3.json("/api/v1/switches", function(error, switches) {
         d3.json("/v1.0/topology/links", function(error, links) {
             d3.json("/v1.0/topology/hosts", function(error, hosts) {
                 console.log(links)

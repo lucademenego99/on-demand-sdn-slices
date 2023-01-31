@@ -1,0 +1,181 @@
+* {
+    margin: 0;
+    padding: 0;
+}
+html{
+    
+    width: 100%;
+    height: 100%;
+}
+body {
+    width: 100%;
+    height: 100%;
+    min-width: 850px;
+}
+#network_graph{
+    width: 100%;
+    height: 100%;
+    margin: auto;
+}
+.switch:hover{
+  cursor: pointer;
+}
+.link{
+    margin: 5px;
+}
+.header ul {
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    background-color: #333;
+  }
+  
+ .header li {
+    float: left;
+  }
+  
+ .header li a {
+    display: block;
+    color: white;
+    text-align: center;
+    padding: 14px 16px;
+    text-decoration: none;
+  }
+  
+  /* Change the link color to #111 (black) on hover */
+  .header li a:hover {
+    background-color: #111;
+  }
+
+  
+  .sidenav .link {
+    padding: 8px 8px 8px 32px;
+    text-decoration: none;
+    font-size: 15px;
+    color: white;
+    display: block;
+}
+
+/* Change the link color to #111 (black) on hover */
+.sidenav .link:hover {
+  background-color: #111;
+  cursor: pointer;
+}
+  #content{
+    margin-left: 0;
+    padding-top:50px;
+    width: 100%;
+    height: 600px;
+  }
+  #topology_view{
+    min-width: 750px;
+    height: 600px;
+    align-items: center;
+  }
+  #details{
+    padding-top:50px;
+    min-width: 150px;
+    right: 0;
+    top: 0;
+    position: absolute;
+    text-align: center;
+    margin-right: 200px;
+    margin-bottom: 50px;
+  }
+  #details table{
+    margin: auto;
+    min-width: 400px;
+  }
+  @media only screen and (max-width: 1350px) {
+    #details{
+      padding-top:0px;
+      left: 0;
+      bottom: 0;
+      position: relative;
+      text-align: center;
+      margin-left: 320px;
+      margin-right: 100px;
+    }
+    #details p{
+      bottom: 0;
+      position: relative;
+    }
+  }
+.activeLink{
+  stroke:#00cc00 !important;
+  stroke-width: 5px;
+}
+.h1eth0,.h2eth0,.h3eth0,.h4eth0,.h5eth0{
+  stroke:#00cc00 !important;
+  stroke-width: 5px;
+}
+.deleteSliceBtn{
+  border-radius: 50%;
+  width: 38.5px;
+  height: 38.5px;
+}
+.deleteSliceBtn img {
+  position:absolute;
+  top: 50%;
+  left:50%;
+  -webkit-transform: translate(-50%, -50%);
+  -ms-transform: translate(-50%, -50%);
+  transform: translate(-50%, -50%);
+}
+.deleteSliceBtn:hover{
+  cursor: pointer;
+}
+.sidenav {
+  height: max-content; /* 100% Full-height */
+  width: 180px; /* 0 width - change this with JavaScript */
+  position: absolute;
+  top: 0px; /* Stay at the top */
+  left: 0;
+  background-color: #333; /* Black*/
+  opacity: 100%  ;
+  overflow-x: hidden; /* Disable horizontal scroll */
+  display:block;
+  border-radius: 0 0 10px 0;
+  padding-top: 10px;
+  cursor: default;
+}
+.sidenav hr{
+  width: 170px;
+  margin-left: auto;
+  margin-right: auto;
+  border-color: #818181;
+}
+.sidenav p {
+  padding: 10px 0px 10px 8px;
+  text-decoration: none;
+  font-size: 18px;
+  color: white;
+  display: block;
+}
+/* The navigation menu links */
+.sidenav a {
+  padding: 8px 8px 8px 32px;
+  text-decoration: none;
+  font-size: 15px;
+  color: white;
+  display: block;
+}
+.sidenav a:hover{
+  background-color: #111;
+}
+#loadingLayer{
+  position: fixed;
+  width: 100%;
+  height: 100%;
+  z-index: 10;
+  background-color: rgba(255, 255, 255, 0.7);;
+  text-align: center;
+}
+#loadingLayer div{
+  position: relative;
+  top: 50%;
+  width: 100%;
+  height: 100%;
+  text-align: center;
+}

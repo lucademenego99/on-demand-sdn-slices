@@ -1,16 +1,34 @@
-# on-demand-sdn-slices
+# On Demand SDN Slices in ComNetsEmu
+This is an academic project for the Softwarized and Virtualized Mobile Networks course at the University of Trento, taught by Prof. Fabrizio Granelli.
 
-## Run the example topology
-Open two terminals. In the first, start the main ryu application by executing:
-```
-sudo ovs-vsctl set-manager ptcp:6632        # Necessary for QoS REST API to work correctly
-ryu run --observe-links ryu_application.py  # Main ryu application
-```
+## Project Goal
+The main goal of the project is to implement a network slicing approach to enable dynamic activation/de-activation of network slices via CLI/GUI commands
 
-In the other terminal, create the example topology by executing:
-```
-sudo ./mesh-network.py
-```
+## Setup the environment
+The project relies on ComNetsEmu, a testbed and network emulator that already provides all the dependencies we need to start the Ryu application and the MiniNET topology. More information about it can be found [here](https://git.comnets.net/public-repo/comnetsemu). We personally installed it by cloning the repository and using Vagrant. If installed in this way, the project can be easily started by following these steps:
+
+1. Start the Virtual Machine and get access to a shell
+2. Navigate to the directory:
+    ```
+    cd comnetsemu/app/realizing_network_slicing/
+    ```
+3. Clone the repository: 
+    ```
+    git clone https://github.com/lucademenego99/on-demand-sdn-slices.git
+    ```
+4. Move inside the repo directory: 
+    ```
+    cd on-demand-sdn-slices
+    ```
+5. Start the main ryu application by executing
+    ```
+    sudo ovs-vsctl set-manager ptcp:6632        # Necessary for QoS REST API to work correctly
+    ryu run --observe-links ryu_application.py  # Main ryu application
+    ```
+6. Open another terminal to create the mininet topology
+    ```
+    sudo ./mesh-network.py
+    ```
 
 This will create a mesh topology with 5 hosts and 5 switches, called respectively `h1, h2, h3, h4, h5` and `s1, s2, s3, s4, s5`.
 
@@ -24,8 +42,19 @@ From now on, you can:
 - use the exposed REST API to manage the network (all routes are documented in the next sections)
 - use the exposed web application by opening - using a browser - `http://localhost:8080`.
 
-The web application allows you to...
+## Web application functionalities
+The web application consists of two pages namely, the *Homepage* and the *New slice* page. 
+On the *Homepage*, the user is able to perform the following tasks:
+- View the network topology and the configurations of the various switches in case slices have been applied.
+- Apply predefined slices, which simulate common network topologies such as *Bus*, *Tree* and *Star*.
+- Apply custom slices, which can be created in the New slice page.
+- Deactivate applied slices, allowing the network to revert back to a mesh network configuration.
 
+When the user navigates to the *New slice* he has the following capabilities:
+- Create new flow by specifying source and destination hosts.
+- Preview the created flow.
+- Name the custom slice to make it easier to identify and locate later.
+- Save custom slices for future use.
 
 ## Ryu application components
 
@@ -40,28 +69,33 @@ The main business logic of the application is inside the file `switch_stp_rest.p
 
 Some ryu components have been modified a bit to meet this project's requirements, namely the `stplib` and the main `hub`.
 
-## REST API routes (swagger docs?)
-Following are the routes exposed by the `switch_stp_rest` Controller.
+## REST API routes
+The list of available endpoints exposed by `switch_stp_rest` have been defined following the OpenAPI 3.0.0 standard. The YAML file containing the list is available in `resources/docs.yaml`. Otherwise, after having started the application, a webpage showcasing all endpoints can be accessed at [http://localhost:8080/docs/index.html](http://localhost:8080/docs/index.html).
 
-...
-...
+As a last alternative, the docs are also served by SwaggerHub: [https://app.swaggerhub.com/apis/lucademenego99/on-demand-sdn-slices/1.0.0](https://app.swaggerhub.com/apis/lucademenego99/on-demand-sdn-slices/1.0.0).
 
 #### Examples
-...
-
+Get all hosts:
+```
+curl -X GET http://127.0.0.1:8080/api/v1/hosts
+```
 
 Create a new slice:
 ```
 curl -X POST -d '{"slice": {"1": {"5": 1, "1": 5}, "2": {"1": 5, "5": 1}, "3": {}, "4": {}, "5": {}}, "qos": [{"queue": "3", "switch_id": 1, "port_name": "s1-eth5", "max_rate": "500000", "nw_dst": "10.0.0.2", "nw_src": "10.0.0.1"}]}'  http://127.0.0.1:8080/api/v1/slice
 ```
 
-# Todos
+Activate a slice:
+```
+curl -X GET http://127.0.0.1:8080/api/v1/slice/1
+```
 
-- instead of redefining ws_topology, stplib and hub, can we just extend them with the few new features we need?
-- make switch_stp_rest's `__init__` independent from the architecture
-  - we need to decide how the priority of each switch should be defined: is it possible to choose it based on the links' bandwidth? Do we have this information at startup?
-- TODO web application
-  - maybe add some new listeners to the ws_topology, to update the webapp when the ports' status is changing
-  - should we use a web framework (e.g. Svelte)? I wanted to use it, but when calling the API from another port you get CORS errors, and I couldn't find a way to modify the response headers of the python web server to solve the problem.
-- TODO cli application
+Delete a slice:
+```
+curl -X DELETE http://127.0.0.1:8080/api/v1/slice/2
+```
 
+Deactivate a slice:
+```
+curl -X GET http://127.0.0.1:8080/api/v1/slice/deactivate
+```
