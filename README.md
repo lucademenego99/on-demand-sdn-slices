@@ -1,16 +1,34 @@
-# on-demand-sdn-slices
+# On Demand SDN Slices in ComNetsEmu
+This is an academic project for the Softwarized and Virtualized Mobile Networks course at the University of Trento, taught by Prof. Fabrizio Granelli.
 
-## Run the example topology
-Open two terminals. In the first, start the main ryu application by executing:
-```
-sudo ovs-vsctl set-manager ptcp:6632        # Necessary for QoS REST API to work correctly
-ryu run --observe-links ryu_application.py  # Main ryu application
-```
+## Project Goal
+The main goal of the project is to implement a network slicing approach to enable dynamic activation/de-activation of network slices via CLI/GUI commands
 
-In the other terminal, create the example topology by executing:
-```
-sudo ./mesh-network.py
-```
+## Setup the environment
+The project relies on ComNetsEmu, a testbed and network emulator that already provides all the dependencies we need to start the Ryu application and the MiniNET topology. More information about it can be found [here](https://git.comnets.net/public-repo/comnetsemu). We personally installed it by cloning the repository and using Vagrant. If installed in this way, the project can be easily started by following these steps:
+
+1. Start the Virtual Machine and get access to a shell
+2. Navigate to the directory:
+    ```
+    cd comnetsemu/app/realizing_network_slicing/
+    ```
+3. Clone the repository: 
+    ```
+    git clone https://github.com/lucademenego99/on-demand-sdn-slices.git
+    ```
+4. Move inside the repo directory: 
+    ```
+    cd on-demand-sdn-slices
+    ```
+5. Start the main ryu application by executing
+    ```
+    sudo ovs-vsctl set-manager ptcp:6632        # Necessary for QoS REST API to work correctly
+    ryu run --observe-links ryu_application.py  # Main ryu application
+    ```
+6. Open another terminal to create the mininet topology
+    ```
+    sudo ./mesh-network.py
+    ```
 
 This will create a mesh topology with 5 hosts and 5 switches, called respectively `h1, h2, h3, h4, h5` and `s1, s2, s3, s4, s5`.
 
