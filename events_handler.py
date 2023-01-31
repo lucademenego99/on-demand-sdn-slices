@@ -29,7 +29,7 @@ class EventsHandler(object):
         """
         self.send_event(self.to, SliceUpdateEvent(arg))
 
-    def send_slice__list_update(self, arg):
+    def send_slice_list_update(self, arg):
         """
         Send a slice list update event to the GUI
         :param arg: event argument

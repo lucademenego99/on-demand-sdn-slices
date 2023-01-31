@@ -42,6 +42,11 @@ class WebSocketTopology(app_manager.RyuApp):
         """Slice update event handler"""
         self._rpc_broadcall('event_slice_update', ev.slice_template)
 
+    @set_ev_cls(custom_events.SliceListUpdateEvent)
+    def _event_slice_list_update(self, ev):
+        """Slice update event handler"""
+        self._rpc_broadcall('event_slice_list_update', ev.slice_list)
+
 
     @set_ev_cls(event.EventSwitchLeave)
     def _event_switch_leave_handler(self, ev):

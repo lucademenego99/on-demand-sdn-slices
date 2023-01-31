@@ -418,7 +418,7 @@ class SwitchController(ControllerBase):
 
         # Define the new slicing
         switch.slice_to_port = switch.slice_templates[int(sliceid)-1]["slice"]
-        switch.current_slice_index = sliceid
+        switch.current_slice_index = int(sliceid)
         
         # Update the topology based on the updated slice
         switch.update_topology_slice()
@@ -426,6 +426,7 @@ class SwitchController(ControllerBase):
         # Slice completed
         switch.slicing = False
 
+        print("current applied slice "+str(switch.current_slice_index))
         switch.events_handler.send_slice_update(switch.slice_to_port)
         return Response(content_type='application/json', text=json.dumps({"status": "ok", "slice": sliceid}))
     
@@ -448,7 +449,7 @@ class SwitchController(ControllerBase):
             print("Finished delete all qos rules")
 
             # Delete all queues
-            for qos_configuration in switch.slice_templates[int(switch.current_slice_index)-1]["qos"]:
+            for qos_configuration in switch.slice_templates[switch.current_slice_index-1]["qos"]:
                 res = requests.delete('http://localhost:8080/qos/queue/' + dpid_lib.dpid_to_str(qos_configuration['switch_id']))
                 print(res.text)
                 print("Finished deleting queue %s" % dpid_lib.dpid_to_str(qos_configuration['switch_id']))
@@ -460,7 +461,7 @@ class SwitchController(ControllerBase):
         switch.current_slice_index = None
         
         switch.slicing = False
-
+        switch.events_handler.send_slice_update(switch.slice_to_port)
         return Response(content_type='application/json', text=json.dumps({"status": "ok"}))
     
     @route('create-slice', url + "/slice", methods=['POST'])
@@ -479,9 +480,13 @@ class SwitchController(ControllerBase):
 
         # Add the slice to the slice_templates
         try:
+            for slice in switch.slice_templates:
+                if(slice["name"]==req["name"]):
+                    return Response(content_type='application/json', text=json.dumps({"status": "ko", "slice": "slice name already used"}))
             switch.slice_templates.append(req)
             with open(utils.get_template_path(), "w") as outfile:
                 json.dump(switch.slice_templates, outfile)
+            switch.events_handler.send_slice_list_update(switch.slice_templates)
             return Response(content_type='application/json', text=json.dumps({"status": "ok", "slice": switch.slice_templates}))
             
         except Exception as e:
@@ -500,12 +505,18 @@ class SwitchController(ControllerBase):
         # Check if the slice is valid
         if len(switch.slice_templates) < int(sliceid) or int(sliceid)<5:
             return Response(status=404)
-
+        if switch.current_slice_index and int(sliceid) < switch.current_slice_index:
+            print("deleting slice with smaller id, new applied id will be "+str(switch.current_slice_index-1))
+            switch.current_slice_index-=1
+        elif switch.current_slice_index and int(sliceid)==switch.current_slice_index:
+            print("deleting currently applied slice, deactivating first "+str(switch.current_slice_index-1))
+            self.deactivate_slice(req,**kwargs)
         # Delete the slice from the slice_templates
         del switch.slice_templates[int(sliceid)-1]
-
+        
         # Update the template file
         with open(utils.get_template_path(), "w") as outfile:
             json.dump(switch.slice_templates, outfile)
+        switch.events_handler.send_slice_list_update(switch.slice_templates)
 
         return Response(content_type='application/json', text=json.dumps({"status": "ok", "slices": switch.slice_templates}))

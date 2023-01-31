@@ -517,7 +517,14 @@ function confirmSlice(){
             method: 'POST', // *GET, POST, PUT, DELETE, etc.
             body: JSON.stringify({"name":name,"slice":finalSlice,"qos":qos}) // body data type must match "Content-Type" header
           })
-          .then((res)=>console.log(res.body));
+          .then((res)=>res.json())
+          .then((data)=>{
+            if(data["status"]=="ko"){
+                alert(data["slice"])
+            }else{
+                if(confirm("Slice created, do you want to go back to the homepage?")) window.location="http://localhost:8080/"
+            }
+          });
     }
 
 }
