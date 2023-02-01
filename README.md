@@ -80,11 +80,6 @@ Get all hosts:
 curl -X GET http://127.0.0.1:8080/api/v1/hosts
 ```
 
-Create a new slice:
-```
-curl -X POST -d '{"slice": {"1": {"5": 1, "1": 5}, "2": {"1": 5, "5": 1}, "3": {}, "4": {}, "5": {}}, "qos": [{"queue": "3", "switch_id": 1, "port_name": "s1-eth5", "max_rate": "500000", "nw_dst": "10.0.0.2", "nw_src": "10.0.0.1"}]}'  http://127.0.0.1:8080/api/v1/slice
-```
-
 Activate a slice:
 ```
 curl -X GET http://127.0.0.1:8080/api/v1/slice/1
